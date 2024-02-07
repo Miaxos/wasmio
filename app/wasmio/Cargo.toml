@@ -1,0 +1,32 @@
+[package]
+name = "wasmio"
+version = "0.0.1"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "WasmIO a S3 Implementation on steroid"
+readme = "README.md"
+keywords = [
+    "wasm",
+    "wasi",
+    "s3",
+]
+categories = ["network-programming"]
+
+[dependencies]
+anyhow.workspace = true
+axum.workspace = true
+futures.workspace = true
+serde.workspace = true
+tokio = { version = "=1.24", default-features = false, features = [
+    "rt-multi-thread",
+    "macros",
+    "fs",
+    "io-util",
+    "net",
+    "signal",
+] }
+tracing-subscriber = { workspace = true, features = ["fmt", "env-filter"] }
+tracing.workspace = true
+
