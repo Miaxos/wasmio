@@ -1,0 +1,20 @@
+[package]
+name = "miaxos/wasmio"
+version = "0.0.1"
+description = "S3 on the Edge"
+wasmer-extra-flags = "--net --enable-threads --enable-bulk-memory"
+
+[dependencies]
+
+[[module]]
+name = "wasmio"
+source = "target/wasm32-wasmer-wasi/debug/wasmio.wasm"
+
+[fs]
+"/public" = "./public"
+
+[[command]]
+name = "wasmio"
+module = "wasmio"
+runner = "wasi@unstable_"
+

@@ -17,8 +17,12 @@ categories = ["network-programming"]
 [dependencies]
 anyhow.workspace = true
 axum.workspace = true
+config.workspace = true
+dotenv = "0.15"
 futures.workspace = true
-serde.workspace = true
+serde = { workspace = true, features = ["derive"] }
+
+parking_lot = { version = "=0.12.1", features = ["nightly"] }
 tokio = { version = "=1.24", default-features = false, features = [
     "rt-multi-thread",
     "macros",

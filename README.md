@@ -9,6 +9,7 @@ Need:
 
 ```
 cargo wasix run --package wasmio
+wasmer run . --net --enable-threads --env CONFIG_FILE_LOCATION=/public/config.local.toml 
 ```
 
 ## Features
