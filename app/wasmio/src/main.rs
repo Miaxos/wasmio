@@ -21,6 +21,8 @@ async fn main() -> anyhow::Result<()> {
 Version: {version}
 port: {port}
 addr: {addr}
+
+by @miaxos https://github.com/miaxos
 "###,
         version = VERSION,
         port = config.bind_addr.port(),
@@ -29,8 +31,8 @@ addr: {addr}
 
     // Instrumentation
     let _ = Instruments::new();
+    info!("Starting the process");
 
-    info!("Go");
-
+    info!("Ending the process");
     Ok(())
 }

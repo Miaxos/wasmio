@@ -10,6 +10,7 @@ Need:
 ```
 cargo wasix run --package wasmio
 wasmer run . --net --enable-threads --env CONFIG_FILE_LOCATION=/public/config.local.toml 
+cargo wasix build --package wasmio && wasmer run . --net --enable-threads --env CONFIG_FILE_LOCATION=/public/config.local.toml --env RUST_LOG=info
 ```
 
 ## Features
