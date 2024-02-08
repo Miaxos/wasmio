@@ -20,12 +20,14 @@ axum = { workspace = true, features = ["macros"] }
 axum-serde = { version = "0.2", features = ["xml"] }
 
 config.workspace = true
+chrono = { version = "0.4", features = ["serde"] }
 dotenv = "0.15"
 futures.workspace = true
 
 quick-xml = { version = "0.31", features = ["serialize"] }
 serde = { workspace = true, features = ["derive"] }
 serde_aws_types.workspace = true
+serde_json = "1"
 
 hyper.workspace = true
 
@@ -49,3 +51,7 @@ tracing.workspace = true
 
 [build-dependencies]
 chrono = "0.4.33"
+
+[dev-dependencies]
+tempfile = "3"
+insta = "1"

@@ -1,0 +1,10 @@
+---
+source: app/wasmio/src/infrastructure/storage/mod.rs
+assertion_line: 166
+expression: result.unwrap()
+---
+DatabaseInfo {
+    name: "test",
+    number_element: 0,
+    created_at: 2024-02-08T16:08:56.582873Z,
+}
