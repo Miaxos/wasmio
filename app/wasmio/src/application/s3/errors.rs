@@ -88,6 +88,7 @@ impl IntoResponse for S3HTTPError {
 
         Response::builder()
             .status(self.kind.status_code())
+            .header(axum::http::header::CONTENT_TYPE, "application/xml")
             .body(Body::new(body))
             .unwrap()
     }

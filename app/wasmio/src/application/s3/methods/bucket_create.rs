@@ -22,8 +22,8 @@ pub async fn bucket_create_handle(
         Some((bucket_name, _)) => bucket_name,
         _ => {
             return Err(S3HTTPError::custom(
-                "",
-                "",
+                &host,
+                "42",
                 S3ErrorCodeKind::InvalidBucketName,
             ));
         }
