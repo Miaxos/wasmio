@@ -1,0 +1,13 @@
+[package]
+name = "serde_aws_types"
+version = "0.0.1"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "AWS Types with serde"
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+
+[build-dependencies]

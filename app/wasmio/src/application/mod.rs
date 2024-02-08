@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use tokio::task::JoinHandle;
+use tokio::{net::TcpListener, task::JoinHandle};
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
 use tracing::info;
 
@@ -33,10 +33,13 @@ impl Application {
         );
 
         tokio::spawn(async move {
+            let tcp = TcpListener::bind(&addr).await?;
             info!("Server starting at {addr}");
-            axum::Server::bind(&addr)
-                .serve(router.into_make_service_with_connect_info::<SocketAddr>())
-                .await?;
+            axum::serve(
+                tcp,
+                router.into_make_service_with_connect_info::<SocketAddr>(),
+            )
+            .await?;
 
             Ok::<(), anyhow::Error>(())
         })

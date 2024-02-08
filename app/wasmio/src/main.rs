@@ -1,5 +1,9 @@
+#![cfg_attr(all(target_arch = "wasm32", target_os = "wasi"), feature(wasi_ext))]
+
 mod application;
 use application::Application;
+
+mod domain;
 
 mod infrastructure;
 use infrastructure::config::Cfg;
