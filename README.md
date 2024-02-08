@@ -23,3 +23,8 @@ cargo wasix build --package wasmio && wasmer run . --net --enable-threads --env 
 - [ ] API Endpoings for creating, listing, deleting objects
 - [ ] Creation date / hash available
 - [ ] Tests & e2e tests
+
+## TODO
+
+- Error management, quite crappy right now, abstract ressource & request_id and
+impl proper From to have easy way to propagate errors.

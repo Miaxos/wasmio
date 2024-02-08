@@ -10,6 +10,8 @@ use state::AppState;
 mod mapping;
 use mapping::AppMapping;
 
+use crate::infrastructure::storage::FSStorage;
+
 mod s3;
 
 #[derive(Debug)]
@@ -18,9 +20,9 @@ pub struct Application {
 }
 
 impl Application {
-    pub fn new() -> Self {
+    pub fn new(storage: FSStorage) -> Self {
         Self {
-            state: AppState::new(),
+            state: AppState::new(storage),
         }
     }
 

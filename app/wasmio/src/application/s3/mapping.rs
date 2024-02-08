@@ -1,15 +1,17 @@
 use axum::routing::put;
 use axum::Router;
 
+use crate::domain::storage::BackendDriver;
+
 use super::methods::bucket_create::bucket_create_handle;
 use super::state::S3State;
 
-pub struct S3Mapping {
-    state: S3State,
+pub struct S3Mapping<T: BackendDriver> {
+    state: S3State<T>,
 }
 
-impl S3Mapping {
-    pub fn new(state: S3State) -> Self {
+impl<T: BackendDriver> S3Mapping<T> {
+    pub fn new(state: S3State<T>) -> Self {
         Self { state }
     }
 

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use axum::{
     body::Body,
     http::StatusCode,
@@ -5,6 +7,8 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use tracing::error;
+
+use crate::domain::storage::errors::BucketStorageError;
 
 /// S3 partiel error code enum
 ///
@@ -15,12 +19,15 @@ use tracing::error;
 pub enum S3ErrorCodeKind {
     /// The specified bucket is not valid.
     InvalidBucketName,
+    /// An internal error occurred. Try again.
+    InternalError,
 }
 
 impl S3ErrorCodeKind {
     fn status_code(&self) -> StatusCode {
         match self {
             S3ErrorCodeKind::InvalidBucketName => StatusCode::BAD_REQUEST,
+            S3ErrorCodeKind::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -28,6 +35,7 @@ impl S3ErrorCodeKind {
     fn message(&self) -> &'static str {
         match self {
             S3ErrorCodeKind::InvalidBucketName => "The specified bucket is not valid.",
+            S3ErrorCodeKind::InternalError => "An internal error occurred. Try again.",
         }
     }
 }
@@ -51,7 +59,7 @@ impl S3HTTPError {
     }
 }
 
-// ------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 #[derive(Serialize, Deserialize)]
 pub struct Error {
@@ -91,5 +99,15 @@ impl IntoResponse for S3HTTPError {
             .header(axum::http::header::CONTENT_TYPE, "application/xml")
             .body(Body::new(body))
             .unwrap()
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+impl From<BucketStorageError> for S3ErrorCodeKind {
+    fn from(value: BucketStorageError) -> Self {
+        match value {
+            BucketStorageError::Unknown => Self::InternalError,
+        }
     }
 }
