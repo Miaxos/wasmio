@@ -1634,6 +1634,7 @@ dependencies = [
  "futures",
  "hyper 0.14.27",
  "parking_lot",
+ "quick-xml",
  "serde",
  "serde_aws_types",
  "strum",

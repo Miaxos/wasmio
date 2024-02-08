@@ -22,6 +22,8 @@ axum-serde = { version = "0.2", features = ["xml"] }
 config.workspace = true
 dotenv = "0.15"
 futures.workspace = true
+
+quick-xml = { version = "0.31", features = ["serialize"] }
 serde = { workspace = true, features = ["derive"] }
 serde_aws_types.workspace = true
 
