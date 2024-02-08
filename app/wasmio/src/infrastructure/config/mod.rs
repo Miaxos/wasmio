@@ -4,11 +4,15 @@ use anyhow::Context;
 use config::Config;
 use serde::{Deserialize, Serialize};
 
+mod storage;
+pub use storage::StorageConfig;
+
 /// Configuration file for the application.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Cfg {
     pub bind_addr: SocketAddr,
-    pub max_connection: u16,
+
+    pub storage: StorageConfig,
 }
 
 impl Cfg {

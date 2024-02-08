@@ -1,6 +1,11 @@
 # wasmio
 S3 Backed Server for Wasmer
 
+## Idea
+
+Wasmer allow file storage with mounted volumes, with this kind of backend we'll
+be able to implement the S3 APIs.
+
 ## Development
 
 Need:

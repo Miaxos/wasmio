@@ -1,2 +1,5 @@
-bind_addr = "0.0.0.0:3456"
-max_connection = 200
+# The bind address we are going to listen to.
+bind_addr = "0.0.0.0:8000"
+
+[storage]
+path = "/public/data/"

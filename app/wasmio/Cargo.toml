@@ -31,6 +31,10 @@ tokio = { version = "=1.24", default-features = false, features = [
     "net",
     "signal",
 ] }
+
+tower = { workspace = true, features = ["make", "log"] }
+tower-http = { workspace = true, features = ["trace", "add-extension", "timeout", "limit"] }
+
 tracing-subscriber = { workspace = true, features = ["fmt", "env-filter"] }
 tracing.workspace = true
 

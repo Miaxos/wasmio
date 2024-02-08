@@ -1,3 +1,6 @@
+mod application;
+use application::Application;
+
 mod infrastructure;
 use infrastructure::config::Cfg;
 use infrastructure::constant::VERSION;
@@ -32,6 +35,14 @@ by @miaxos https://github.com/miaxos
     // Instrumentation
     let _ = Instruments::new();
     info!("Starting the process");
+
+    for i in std::env::vars() {
+        info!("{i:?}");
+    }
+
+    // Server
+    let app = Application::new().serve(config.bind_addr);
+    app.await??;
 
     info!("Ending the process");
     Ok(())
