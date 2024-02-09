@@ -235,6 +235,7 @@ impl BackendStorage for FSStorage {
 
 #[cfg(test)]
 mod tests {
+    use futures::StreamExt;
     use tempfile::tempdir;
 
     use super::*;
