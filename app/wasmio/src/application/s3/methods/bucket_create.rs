@@ -24,7 +24,7 @@ pub async fn bucket_create_handle<T: BackendDriver>(
         .bucket_loader
         .create_new_bucket(bucket_name)
         .await
-        .map_err(|err| req.from_error_code(err))?;
+        .map_err(|err| req.to_error_code(err))?;
 
     Ok(Response::builder()
         .status(StatusCode::OK)

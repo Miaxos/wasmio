@@ -34,7 +34,7 @@ impl RequestContext {
         format!("{bucket}/{obj}", bucket = self.bucket(), obj = obj)
     }
 
-    pub fn from_error_code(
+    pub fn to_error_code(
         &self,
         code: impl Into<S3ErrorCodeKind>,
     ) -> S3HTTPError {

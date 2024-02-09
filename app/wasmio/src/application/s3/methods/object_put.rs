@@ -30,7 +30,7 @@ pub async fn object_put_handle<T: BackendDriver>(
 
     let key = match req.object() {
         // TODO: Put the proper error
-        None => return Err(req.from_error_code(S3ErrorCodeKind::InternalError)),
+        None => return Err(req.to_error_code(S3ErrorCodeKind::InternalError)),
         Some(key) => key.to_string(),
     };
 
@@ -56,12 +56,12 @@ pub async fn object_put_handle<T: BackendDriver>(
 
     if let Err(err) = request {
         warn!("{err:?}");
-        return Err(req.from_error_code(S3ErrorCodeKind::InternalError));
+        return Err(req.to_error_code(S3ErrorCodeKind::InternalError));
     }
 
     let insert_task =
         state.bucket_loader.put_object(request.expect("can't fail"));
-    insert_task.await.map_err(|x| req.from_error_code(x))?;
+    insert_task.await.map_err(|x| req.to_error_code(x))?;
 
     Ok(Response::builder()
         .status(StatusCode::OK)
