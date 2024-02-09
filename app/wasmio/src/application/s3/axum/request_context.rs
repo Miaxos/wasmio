@@ -2,7 +2,7 @@ use axum::{
     async_trait,
     extract::{
         rejection::{HostRejection, PathRejection},
-        FromRequestParts, Host, Path,
+        FromRequestParts, Host,
     },
     http::request::Parts,
     response::IntoResponse,

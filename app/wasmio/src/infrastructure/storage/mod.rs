@@ -3,9 +3,9 @@ use std::{path::PathBuf, pin::Pin};
 use axum::async_trait;
 use base64ct::{Base64, Encoding};
 use chrono::{DateTime, Utc};
-use futures::{future::join, Stream, StreamExt, TryStreamExt};
-use sha2::{digest::generic_array::GenericArray, Digest, Sha256};
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite};
+use futures::{future::join, Stream, TryStreamExt};
+use sha2::{Digest, Sha256};
+use tokio::io::{AsyncRead, AsyncWrite};
 use tracing::warn;
 
 /// Implement this trait which define the backend storage used to store data

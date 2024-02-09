@@ -1,4 +1,4 @@
-use std::str::FromStr;
+
 use tracing::warn;
 
 use crate::{
@@ -15,10 +15,9 @@ use axum::{
     extract::{Request, State},
     http::{
         header::{
-            AsHeaderName, CACHE_CONTROL, CONTENT_DISPOSITION, CONTENT_ENCODING, CONTENT_LANGUAGE,
+            CACHE_CONTROL, CONTENT_DISPOSITION, CONTENT_ENCODING, CONTENT_LANGUAGE,
             CONTENT_LENGTH, CONTENT_TYPE, ETAG,
-        },
-        HeaderMap, StatusCode,
+        }, StatusCode,
     },
     response::Response,
 };

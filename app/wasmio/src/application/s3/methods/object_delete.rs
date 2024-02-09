@@ -1,30 +1,22 @@
-use std::str::FromStr;
+
 use tracing::warn;
 
 use crate::{
     application::s3::{
         axum::{
-            header_parse, header_parse_bool, header_string_opt, request_context::RequestContext,
+            header_parse_bool, header_string_opt, request_context::RequestContext,
         },
         errors::S3ErrorCodeKind,
-        headers::{self, X_AMZ_STORAGE_CLASS},
+        headers::{self},
     },
     domain::storage::BackendDriver,
     infrastructure::axum::headers::Headers,
 };
 use axum::{
-    body::{Body, BodyDataStream},
     extract::{Request, State},
-    http::{
-        header::{
-            AsHeaderName, CACHE_CONTROL, CONTENT_DISPOSITION, CONTENT_ENCODING, CONTENT_LANGUAGE,
-            CONTENT_LENGTH, CONTENT_TYPE, ETAG,
-        },
-        HeaderMap, StatusCode,
-    },
     response::Response,
 };
-use serde_aws_types::types::{DeleteObjectRequestBuilder, PutObjectRequestBuilder};
+use serde_aws_types::types::{DeleteObjectRequestBuilder};
 use tracing::info;
 
 use crate::application::s3::{errors::S3HTTPError, state::S3State};
