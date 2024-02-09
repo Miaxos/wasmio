@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, pin::Pin};
 
 use axum::async_trait;
 use base64ct::{Base64, Encoding};
@@ -25,14 +25,14 @@ pub trait BackendStorage: Send + Sync {
     async fn database_metadata(&self, name: &str) -> anyhow::Result<Option<DatabaseInfo>>;
 
     /// List elements from the database,
-    async fn list_element_in_database<R: AsyncRead + Unpin>(
+    async fn list_element_in_database(
         &self,
         db: &str,
         start_after: Option<&str>,
-    ) -> anyhow::Result<Box<dyn Stream<Item = anyhow::Result<String>>>>;
+    ) -> anyhow::Result<Pin<Box<dyn Stream<Item = anyhow::Result<String>>>>>;
 
     /// Get element from the database,
-    async fn get_element_in_database<T: AsyncWrite + Send + Unpin, S: AsRef<str>>(
+    async fn get_element_in_database<T: AsyncWrite + Send + Unpin>(
         &self,
         db: &str,
         key: &str,
@@ -48,15 +48,11 @@ pub trait BackendStorage: Send + Sync {
     ) -> anyhow::Result<ElementInfo>;
 
     /// Put an element inside database
-    async fn delete_element_in_database<R: AsyncRead + Unpin + Send>(
-        &self,
-        db: &str,
-        name_elt: &str,
-    ) -> anyhow::Result<ElementInfo>;
+    async fn delete_element_in_database(&self, db: &str, name_elt: &str) -> anyhow::Result<()>;
 }
 
 /// List of database info available
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 pub struct DatabaseInfo {
     name: String,
     number_element: u64,
@@ -157,7 +153,7 @@ impl BackendStorage for FSStorage {
         Ok(elt)
     }
 
-    async fn get_element_in_database<T: AsyncWrite + Send + Unpin, S: AsRef<str>>(
+    async fn get_element_in_database<T: AsyncWrite + Send + Unpin>(
         &self,
         db: &str,
         key: &str,
@@ -171,11 +167,11 @@ impl BackendStorage for FSStorage {
         Ok(size)
     }
 
-    async fn list_element_in_database<R: AsyncRead + Unpin>(
+    async fn list_element_in_database(
         &self,
         db: &str,
         _start_after: Option<&str>,
-    ) -> anyhow::Result<Box<dyn Stream<Item = anyhow::Result<String>>>> {
+    ) -> anyhow::Result<Pin<Box<dyn Stream<Item = anyhow::Result<String>>>>> {
         let ressource_path = self.base_path.join(db);
 
         // We do a read_dir for now, it would be better to instead have an index IMO
@@ -193,15 +189,20 @@ impl BackendStorage for FSStorage {
             }
         };
 
-        Ok(Box::new(a))
+        Ok(Box::pin(a))
     }
 
-    async fn delete_element_in_database<R: AsyncRead + Unpin>(
-        &self,
-        db: &str,
-        name_elt: &str,
-    ) -> anyhow::Result<ElementInfo> {
-        unimplemented!()
+    async fn delete_element_in_database(&self, db: &str, key: &str) -> anyhow::Result<()> {
+        let ressource_path = self.base_path.join(db).join(format!("{key}.0.part.0"));
+        let metadata_path = self.base_path.join(db).join(format!("{key}.0.meta"));
+
+        let a = tokio::fs::remove_file(ressource_path);
+        let b = tokio::fs::remove_file(metadata_path);
+        let (a, b) = join(a, b).await;
+        a?;
+        b?;
+
+        Ok(())
     }
 }
 
@@ -212,15 +213,153 @@ mod tests {
 
     #[tokio::test]
     async fn simple_db_with_fs() {
-        let temp = tempdir().unwrap();
+        let temp = tempdir().expect("Failed to create temporary directory");
         let fs = FSStorage::new(temp.path().to_path_buf());
 
-        let result = fs.new_database("test").await;
+        let result = fs.new_database("test_db").await;
         assert!(result.is_ok());
 
-        let check_metadata_info = fs.database_metadata("test").await;
+        let check_metadata_info = fs.database_metadata("test_db").await;
         assert!(check_metadata_info.is_ok());
         let check_metadata_info = check_metadata_info.unwrap();
         assert!(check_metadata_info.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_new_database() {
+        let temp_dir = tempdir().expect("Failed to create temporary directory");
+        let storage = FSStorage::new(temp_dir.path().to_path_buf());
+
+        let db_name = "test_db";
+        let db_info = storage.new_database(db_name).await.unwrap();
+
+        assert_eq!(db_info.name, db_name);
+        assert_eq!(db_info.number_element, 0);
+
+        let metadata_path = temp_dir.path().join(format!("{}.meta", db_name));
+        assert!(metadata_path.exists());
+    }
+
+    #[tokio::test]
+    async fn test_database_metadata() {
+        let temp_dir = tempdir().expect("Failed to create temporary directory");
+        let storage = FSStorage::new(temp_dir.path().to_path_buf());
+
+        let db_name = "test_db";
+        let db_info = storage.new_database(db_name).await.unwrap();
+
+        let retrieved_db_info = storage.database_metadata(db_name).await.unwrap().unwrap();
+        assert_eq!(db_info, retrieved_db_info);
+    }
+
+    #[tokio::test]
+    async fn test_insert_and_get_element_in_database() {
+        let temp_dir = tempdir().expect("Failed to create temporary directory");
+        let storage = FSStorage::new(temp_dir.path().to_path_buf());
+
+        let db_name = "test_db";
+        storage.new_database(db_name).await.unwrap();
+
+        let element_name = "test_element";
+        let element_content = b"test_content";
+
+        let mut element_reader = std::io::Cursor::new(element_content);
+
+        let element_info = storage
+            .insert_element_in_database(db_name, element_name, &mut element_reader)
+            .await
+            .unwrap();
+
+        let mut retrieved_content = Vec::new();
+        let size = storage
+            .get_element_in_database(db_name, element_name, &mut retrieved_content)
+            .await
+            .unwrap();
+
+        assert_eq!(size, element_content.len() as u64);
+        assert_eq!(retrieved_content, element_content);
+
+        assert_eq!(element_info.name, element_name);
+        assert_eq!(element_info.size, size);
+    }
+
+    #[tokio::test]
+    async fn test_list_element_in_database() {
+        let temp_dir = tempdir().expect("Failed to create temporary directory");
+        let storage = FSStorage::new(temp_dir.path().to_path_buf());
+
+        let db_name = "test_db";
+        storage.new_database(db_name).await.unwrap();
+
+        let element_name = "test_element";
+        storage
+            .insert_element_in_database(db_name, element_name, &mut std::io::Cursor::new(b""))
+            .await
+            .unwrap();
+
+        let mut element_list_stream = storage
+            .list_element_in_database(db_name, None)
+            .await
+            .unwrap();
+
+        let mut found_element = false;
+        while let Some(result) = element_list_stream.next().await {
+            match result {
+                Ok(name) => {
+                    if name == format!("{}.0.meta", element_name) {
+                        found_element = true;
+                        break;
+                    }
+                }
+                Err(_) => {
+                    panic!("Error occurred while listing elements.");
+                }
+            }
+        }
+
+        assert!(found_element);
+    }
+
+    #[tokio::test]
+    async fn test_delete_element_in_database() {
+        let temp_dir = tempdir().expect("Failed to create temporary directory");
+        let storage = FSStorage::new(temp_dir.path().to_path_buf());
+
+        let db_name = "test_db";
+        storage.new_database(db_name).await.unwrap();
+
+        let element_name = "test_element";
+        storage
+            .insert_element_in_database(db_name, element_name, &mut std::io::Cursor::new(b""))
+            .await
+            .unwrap();
+
+        let delete_result = storage
+            .delete_element_in_database(db_name, element_name)
+            .await;
+
+        assert!(delete_result.is_ok());
+
+        let mut element_list_stream = storage
+            .list_element_in_database(db_name, None)
+            .await
+            .unwrap();
+
+        let mut found_element = false;
+        while let Some(result) = element_list_stream.next().await {
+            match result {
+                Ok(name) => {
+                    if name == format!("{}.0.meta", element_name) {
+                        found_element = true;
+                        break;
+                    }
+                }
+                Err(_) => {
+                    panic!("Error occurred while listing elements.");
+                }
+            }
+        }
+
+        assert!(!found_element);
     }
 }
