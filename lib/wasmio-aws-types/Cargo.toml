@@ -5,7 +5,7 @@ authors.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "AWS Types with serde"
+description = "AWS Types with serde for wasmio"
 
 [dependencies]
 axum.workspace = true
