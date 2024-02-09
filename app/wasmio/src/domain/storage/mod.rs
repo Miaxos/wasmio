@@ -3,6 +3,7 @@ use std::fmt::Debug;
 
 pub mod errors;
 use errors::BucketStorageError;
+use tracing::warn;
 
 pub trait BackendDriver: BackendStorage + Debug + Send + Sync + Clone + 'static {}
 impl BackendDriver for FSStorage {}
@@ -22,6 +23,14 @@ impl<T: BackendDriver> BucketStorage<T> {
     }
 
     pub async fn create_new_bucket(&self, bucket_name: &str) -> Result<(), BucketStorageError> {
+        let _db_info = self
+            .backend_storage
+            .new_database(bucket_name)
+            .await
+            .map_err(|err| {
+                warn!("{err:?}");
+                BucketStorageError::Unknown
+            })?;
         Ok(())
     }
 }

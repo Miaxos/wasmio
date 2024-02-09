@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use axum::async_trait;
 use chrono::{DateTime, Utc};
 use futures::future::join;
 use tokio::io::{AsyncRead, AsyncWrite};
@@ -8,7 +9,8 @@ use tracing::warn;
 /// Implement this trait which define the backend storage used to store data
 ///
 /// The storage is very simple for now
-pub trait BackendStorage {
+#[async_trait]
+pub trait BackendStorage: Send + Sync {
     /// To create a new database
     async fn new_database(&self, name: &str) -> anyhow::Result<DatabaseInfo>;
 
@@ -43,7 +45,7 @@ pub trait BackendStorage {
         &self,
         db: &str,
         name_elt: &str,
-        content: R,
+        content: &mut R,
     ) -> anyhow::Result<ElementInfo>;
 
     /// Put an element inside database
@@ -78,10 +80,13 @@ pub struct FSStorage {
 
 impl FSStorage {
     pub fn new(base: PathBuf) -> Self {
+        let _ = std::fs::create_dir(base.join("data"));
+
         Self { base_path: base }
     }
 }
 
+#[async_trait]
 impl BackendStorage for FSStorage {
     async fn new_database(&self, name: &str) -> anyhow::Result<DatabaseInfo> {
         let db_info = DatabaseInfo {
@@ -120,9 +125,9 @@ impl BackendStorage for FSStorage {
         &self,
         db: &str,
         name_elt: &str,
-        content: R,
+        content: &mut R,
     ) -> anyhow::Result<ElementInfo> {
-        unimplemented!()
+        todo!()
     }
 
     async fn get_element_in_database<T: AsyncWrite + Send + Unpin, S: AsRef<str>>(
