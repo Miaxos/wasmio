@@ -32,6 +32,16 @@ wasmer run . \
   --mapdir /public:$(pwd)/public
 ```
 
+## Performance
+
+Right now, we are using a simple JSON to store the data, which is not efficient
+for files based storage. This is just an experiment on the whole storage and
+wasmer.
+
+To have better performance, the storage layer should be reworked to better use
+Files APIs (with Seek for instance, a better format to store data, we don't need
+JSON).
+
 ## Features
 
 - [ ] API Endpoings for creating, listing, deleting objects

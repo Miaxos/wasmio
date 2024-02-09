@@ -31,6 +31,7 @@ tracing-subscriber = "0.3"
 hyper = "=0.14"
 # NOTE: We need to pin and replace some dependencies to achieve wasix compatibility.
 tokio = { version = "=1.35", default-features = false }
+tokio-util = "0.7"
 parking_lot = { version = "=0.12.1", features = ["nightly"] }
 
 serde_aws_types = { path = "./lib/serde_aws_types" }
@@ -51,6 +52,15 @@ incremental = false
 socket2 = { git = "https://github.com/wasix-org/socket2.git", branch = "v0.5.5" }
 libc = { git = "https://github.com/wasix-org/libc.git", branch = "v0.2.152" }
 tokio = { git = "https://github.com/miaxos/tokio.git", branch = "wasix-1.35.1-fs" }
-rustls = { git = "https://github.com/wasix-org/rustls.git", branch = "v0.21.5" }
-hyper = { git = "https://github.com/wasix-org/hyper.git", branch = "v0.14.27" }
+tokio-util = { git = "https://github.com/miaxos/tokio.git", branch = "wasix-1.35.1-fs" }
+rustls = { git = "https://github.com/wasix-org/rustls.git", branch = "v0.22.2" }
+rustls-native-certs = { git = "https://github.com/wasix-org/rustls-native-certs.git", branch = "v0.6.3" }
+hyper-rustls = { git = "https://github.com/wasix-org/hyper-rustls.git", branch = "v0.25.0" }
+hyper-tls = { git = "https://github.com/wasix-org/hyper-tls.git", branch = "master" }
+hyper = { git = "https://github.com/wasix-org/hyper.git", branch = "v0.14.28" }
+h2 = { git = "https://github.com/wasix-org/h2.git", branch = "v0.4.0" }
 mio = { git = "https://github.com/wasix-org/mio.git", branch = "v0.8.9" }
+ring = { git = "https://github.com/wasix-org/ring.git", branch = "0.17.7" }
+
+[patch."https://github.com/wasix-org/tokio.git"]
+tokio = { git = "https://github.com/miaxos/tokio.git", branch = "wasix-1.35.1-fs" }

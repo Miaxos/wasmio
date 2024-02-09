@@ -13,7 +13,7 @@ use crate::domain::storage::errors::BucketStorageError;
 /// S3 partiel error code enum
 ///
 /// See [`ErrorResponses`](https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html)
-#[derive(Clone, Copy, strum::Display)]
+#[derive(Debug, Clone, Copy, strum::Display)]
 #[allow(clippy::upper_case_acronyms)]
 #[non_exhaustive]
 pub enum S3ErrorCodeKind {
@@ -40,6 +40,7 @@ impl S3ErrorCodeKind {
     }
 }
 
+#[derive(Debug)]
 pub struct S3HTTPError {
     /// The bucket or object that is involved in the error.
     ressource: String,
@@ -48,12 +49,24 @@ pub struct S3HTTPError {
     kind: S3ErrorCodeKind,
 }
 
+impl Display for S3HTTPError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.kind.fmt(f)
+    }
+}
+
+impl std::error::Error for S3HTTPError {}
+
 impl S3HTTPError {
-    pub fn custom(ressource: &str, request_id: &str, kind: S3ErrorCodeKind) -> Self {
+    pub fn custom<S1: AsRef<str>, S2: AsRef<str>>(
+        ressource: S1,
+        request_id: S2,
+        kind: S3ErrorCodeKind,
+    ) -> Self {
         Self {
             // TODO: little ugly but it's to have a proper impl quickly
-            request_id: request_id.to_string(),
-            ressource: ressource.to_string(),
+            request_id: request_id.as_ref().to_string(),
+            ressource: ressource.as_ref().to_string(),
             kind,
         }
     }

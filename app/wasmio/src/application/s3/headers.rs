@@ -1,4 +1,4 @@
-pub use hyper::header::*;
+use axum::http::HeaderName;
 
 /// declare http header names from https://github.com/datenlord/s3-server/blob/master/src/headers.rs
 macro_rules! declare_header_name{
@@ -147,6 +147,9 @@ declare_header_name! {
 
     /// x-amz-bucket-object-lock-enabled
     X_AMZ_BUCKET_OBJECT_LOCK_ENABLED: "x-amz-bucket-object-lock-enabled";
+
+    /// x-amz-server-side-encryption-bucket-key-enabled
+    X_AMZ_BUCKET_SERVER_SIDE_ENCRYPTION_BUCKET_KEY_ENABLED: "x-amz-server-side-encryption-bucket-key-enabled";
 
     /// x-amz-bypass-governance-retention
     X_AMZ_BYPASS_GOVERNANCE_RETENTION: "x-amz-bypass-governance-retention";

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use axum::async_trait;
 use chrono::{DateTime, Utc};
@@ -9,6 +9,11 @@ use tracing::warn;
 /// Implement this trait which define the backend storage used to store data
 ///
 /// The storage is very simple for now
+///
+/// It supports creating a Database
+///
+/// - Storing elements in the database
+/// - Storing metadata in the database, the idea for metadata is: it should be fast to manipulate and it'll allow us to create index based on those metadata.
 #[async_trait]
 pub trait BackendStorage: Send + Sync {
     /// To create a new database
@@ -33,15 +38,8 @@ pub trait BackendStorage: Send + Sync {
         writer: &mut T,
     ) -> anyhow::Result<Option<ElementInfo>>;
 
-    /// Get element metadata from the database,
-    async fn get_element_metadata_in_database<T: AsyncWrite + Send + Unpin, S: AsRef<str>>(
-        &self,
-        db: &str,
-        key: &str,
-    ) -> anyhow::Result<Option<ElementInfo>>;
-
     /// Put an element inside database
-    async fn insert_element_in_database<R: AsyncRead + Unpin>(
+    async fn insert_element_in_database<R: AsyncRead + Unpin + Send>(
         &self,
         db: &str,
         name_elt: &str,
@@ -49,7 +47,7 @@ pub trait BackendStorage: Send + Sync {
     ) -> anyhow::Result<ElementInfo>;
 
     /// Put an element inside database
-    async fn delete_element_in_database<R: AsyncRead + Unpin>(
+    async fn delete_element_in_database<R: AsyncRead + Unpin + Send>(
         &self,
         db: &str,
         name_elt: &str,
@@ -64,11 +62,16 @@ pub struct DatabaseInfo {
     created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize, Default)]
 pub struct ElementInfo {
     name: String,
     size: usize,
     created_at: DateTime<Utc>,
+    last_modified: DateTime<Utc>,
+    checksum: String,
+    version: usize,
+    /// User metadata
+    metadata: HashMap<String, String>,
 }
 
 // -------------------------------------------------------------------------------
@@ -121,13 +124,18 @@ impl BackendStorage for FSStorage {
         Ok(Some(data_info))
     }
 
-    async fn insert_element_in_database<R: AsyncRead + Unpin>(
+    async fn insert_element_in_database<R: AsyncRead + Unpin + Send>(
         &self,
         db: &str,
         name_elt: &str,
         content: &mut R,
     ) -> anyhow::Result<ElementInfo> {
-        todo!()
+        let ressource_path = self.base_path.join(format!("{db}/{name_elt}.0.part.0"));
+
+        let mut file = tokio::fs::File::open(ressource_path).await?;
+        tokio::io::copy(content, &mut file).await?;
+
+        Ok(Default::default())
     }
 
     async fn get_element_in_database<T: AsyncWrite + Send + Unpin, S: AsRef<str>>(
@@ -135,15 +143,6 @@ impl BackendStorage for FSStorage {
         db: &str,
         key: &str,
         writer: &mut T,
-    ) -> anyhow::Result<Option<ElementInfo>> {
-        unimplemented!()
-    }
-
-    /// Get element metadata from the database,
-    async fn get_element_metadata_in_database<T: AsyncWrite + Send + Unpin, S: AsRef<str>>(
-        &self,
-        db: &str,
-        key: &str,
     ) -> anyhow::Result<Option<ElementInfo>> {
         unimplemented!()
     }

@@ -18,11 +18,13 @@ categories = ["network-programming"]
 anyhow.workspace = true
 axum = { workspace = true, features = ["macros"] }
 axum-serde = { version = "0.2", features = ["xml"] }
+axum-extra = { version = "0.9", features = ["typed-header"] }
 
 config.workspace = true
 chrono = { version = "0.4", features = ["serde"] }
 dotenv = "0.15"
 futures.workspace = true
+headers = "0.4"
 
 quick-xml = { version = "0.31", features = ["serialize"] }
 serde = { workspace = true, features = ["derive"] }
@@ -32,6 +34,8 @@ serde_json = "1"
 hyper.workspace = true
 
 parking_lot = { version = "=0.12.1", features = ["nightly"] }
+
+sha256 = "1.5"
 strum = { version = "0.26", features = ["derive"] }
 thiserror = "1"
 tokio = { workspace = true, default-features = false, features = [
@@ -42,12 +46,15 @@ tokio = { workspace = true, default-features = false, features = [
     "net",
     "signal",
 ] }
+tokio-util = { workspace = true, features = ["io"] }
 
 tower = { workspace = true, features = ["make", "log"] }
 tower-http = { workspace = true, features = ["trace", "add-extension", "timeout", "limit"] }
 
 tracing-subscriber = { workspace = true, features = ["fmt", "env-filter"] }
 tracing.workspace = true
+
+ulid = "1"
 
 [build-dependencies]
 chrono = "0.4.33"

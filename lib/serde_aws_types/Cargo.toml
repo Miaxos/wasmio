@@ -8,6 +8,10 @@ repository.workspace = true
 description = "AWS Types with serde"
 
 [dependencies]
+axum.workspace = true
+derivative = "2"
+derive_builder = "0.13"
 serde = { workspace = true, features = ["derive"] }
+tokio = { workspace = true, default-features = false }
 
 [build-dependencies]

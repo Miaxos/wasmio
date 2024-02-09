@@ -3,7 +3,10 @@ use std::fmt::Debug;
 
 pub mod errors;
 use errors::BucketStorageError;
-use tracing::warn;
+use futures::TryStreamExt;
+use serde_aws_types::types::PutObjectRequest;
+use tokio_util::io::StreamReader;
+use tracing::{error, warn};
 
 pub trait BackendDriver: BackendStorage + Debug + Send + Sync + Clone + 'static {}
 impl BackendDriver for FSStorage {}
@@ -31,6 +34,27 @@ impl<T: BackendDriver> BucketStorage<T> {
                 warn!("{err:?}");
                 BucketStorageError::Unknown
             })?;
+        Ok(())
+    }
+
+    pub async fn put_object(
+        &self,
+        PutObjectRequest {
+            bucket, key, body, ..
+        }: PutObjectRequest,
+    ) -> Result<(), BucketStorageError> {
+        let body = body.ok_or(BucketStorageError::Unknown)?;
+        let body_err = body.map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err));
+        let mut body_reader = StreamReader::new(body_err);
+
+        self.backend_storage
+            .insert_element_in_database(&bucket, &key, &mut body_reader)
+            .await
+            .map_err(|err| {
+                error!("{err:?}");
+                BucketStorageError::Unknown
+            })?;
+
         Ok(())
     }
 }
