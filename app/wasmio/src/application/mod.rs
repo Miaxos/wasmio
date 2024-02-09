@@ -1,6 +1,7 @@
 use std::net::SocketAddr;
 
-use tokio::{net::TcpListener, task::JoinHandle};
+use tokio::net::TcpListener;
+use tokio::task::JoinHandle;
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
 use tracing::info;
 
@@ -29,10 +30,11 @@ impl Application {
     /// TODO: Proper shutdown process
     pub fn serve(self, addr: SocketAddr) -> JoinHandle<anyhow::Result<()>> {
         let app = AppMapping::new(self.state);
-        let router = app.into_router().layer(
-            TraceLayer::new_for_http()
-                .make_span_with(DefaultMakeSpan::default().include_headers(true)),
-        );
+        let router =
+            app.into_router()
+                .layer(TraceLayer::new_for_http().make_span_with(
+                    DefaultMakeSpan::default().include_headers(true),
+                ));
 
         tokio::spawn(async move {
             let tcp = TcpListener::bind(&addr).await?;

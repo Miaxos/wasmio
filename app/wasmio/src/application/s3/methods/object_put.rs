@@ -1,30 +1,21 @@
-
-use tracing::warn;
-
-use crate::{
-    application::s3::{
-        axum::{header_parse, header_string_opt, request_context::RequestContext},
-        errors::S3ErrorCodeKind,
-        headers::{self, X_AMZ_STORAGE_CLASS},
-    },
-    domain::storage::BackendDriver,
-    infrastructure::axum::headers::Headers,
+use axum::body::{Body, BodyDataStream};
+use axum::extract::{Request, State};
+use axum::http::header::{
+    CACHE_CONTROL, CONTENT_DISPOSITION, CONTENT_ENCODING, CONTENT_LANGUAGE,
+    CONTENT_LENGTH, CONTENT_TYPE, ETAG,
 };
-use axum::{
-    body::{Body, BodyDataStream},
-    extract::{Request, State},
-    http::{
-        header::{
-            CACHE_CONTROL, CONTENT_DISPOSITION, CONTENT_ENCODING, CONTENT_LANGUAGE,
-            CONTENT_LENGTH, CONTENT_TYPE, ETAG,
-        }, StatusCode,
-    },
-    response::Response,
-};
+use axum::http::StatusCode;
+use axum::response::Response;
 use serde_aws_types::types::PutObjectRequestBuilder;
-use tracing::info;
+use tracing::{info, warn};
 
-use crate::application::s3::{errors::S3HTTPError, state::S3State};
+use crate::application::s3::axum::request_context::RequestContext;
+use crate::application::s3::axum::{header_parse, header_string_opt};
+use crate::application::s3::errors::{S3ErrorCodeKind, S3HTTPError};
+use crate::application::s3::headers::{self, X_AMZ_STORAGE_CLASS};
+use crate::application::s3::state::S3State;
+use crate::domain::storage::BackendDriver;
+use crate::infrastructure::axum::headers::Headers;
 
 pub async fn object_put_handle<T: BackendDriver>(
     req: RequestContext,
@@ -68,7 +59,8 @@ pub async fn object_put_handle<T: BackendDriver>(
         return Err(req.from_error_code(S3ErrorCodeKind::InternalError));
     }
 
-    let insert_task = state.bucket_loader.put_object(request.expect("can't fail"));
+    let insert_task =
+        state.bucket_loader.put_object(request.expect("can't fail"));
     insert_task.await.map_err(|x| req.from_error_code(x))?;
 
     Ok(Response::builder()

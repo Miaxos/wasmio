@@ -1,12 +1,11 @@
 use axum::routing::{delete, put};
 use axum::Router;
 
-use crate::domain::storage::BackendDriver;
-
 use super::methods::bucket_create::bucket_create_handle;
 use super::methods::object_delete::object_delete_handle;
 use super::methods::object_put::object_put_handle;
 use super::state::S3State;
+use crate::domain::storage::BackendDriver;
 
 pub struct S3Mapping<T: BackendDriver> {
     state: S3State<T>,

@@ -1,9 +1,11 @@
-use std::{path::PathBuf, pin::Pin};
+use std::path::PathBuf;
+use std::pin::Pin;
 
 use axum::async_trait;
 use base64ct::{Base64, Encoding};
 use chrono::{DateTime, Utc};
-use futures::{future::join, Stream, TryStreamExt};
+use futures::future::join;
+use futures::{Stream, TryStreamExt};
 use sha2::{Digest, Sha256};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tracing::warn;
@@ -15,14 +17,19 @@ use tracing::warn;
 /// It supports creating a Database
 ///
 /// - Storing elements in the database
-/// - Storing metadata in the database, the idea for metadata is: it should be fast to manipulate and it'll allow us to create index based on those metadata.
+/// - Storing metadata in the database, the idea for metadata is: it should be
+///   fast to manipulate and it'll allow us to create index based on those
+///   metadata.
 #[async_trait]
 pub trait BackendStorage: Send + Sync {
     /// To create a new database
     async fn new_database(&self, name: &str) -> anyhow::Result<DatabaseInfo>;
 
     /// To get database metadata, if None, database doesn't exist
-    async fn database_metadata(&self, name: &str) -> anyhow::Result<Option<DatabaseInfo>>;
+    async fn database_metadata(
+        &self,
+        name: &str,
+    ) -> anyhow::Result<Option<DatabaseInfo>>;
 
     /// List elements from the database,
     async fn list_element_in_database(
@@ -48,7 +55,11 @@ pub trait BackendStorage: Send + Sync {
     ) -> anyhow::Result<ElementInfo>;
 
     /// Put an element inside database
-    async fn delete_element_in_database(&self, db: &str, name_elt: &str) -> anyhow::Result<()>;
+    async fn delete_element_in_database(
+        &self,
+        db: &str,
+        name_elt: &str,
+    ) -> anyhow::Result<()>;
 }
 
 /// List of database info available
@@ -102,7 +113,10 @@ impl BackendStorage for FSStorage {
         Ok(db_info)
     }
 
-    async fn database_metadata(&self, name: &str) -> anyhow::Result<Option<DatabaseInfo>> {
+    async fn database_metadata(
+        &self,
+        name: &str,
+    ) -> anyhow::Result<Option<DatabaseInfo>> {
         let ressource_path = self.base_path.join(format!("{name}.meta"));
 
         if let Err(err) = tokio::fs::metadata(&ressource_path).await {
@@ -124,10 +138,12 @@ impl BackendStorage for FSStorage {
     ) -> anyhow::Result<ElementInfo> {
         let now = Utc::now();
 
-        let ressource_path = self.base_path.join(db).join(format!("{name_elt}.0.part.0"));
+        let ressource_path =
+            self.base_path.join(db).join(format!("{name_elt}.0.part.0"));
         let mut file_content = tokio::fs::File::create(ressource_path).await?;
 
-        // TODO: test based on `cat public/data/test-bucket/test.txt.0.part.0 | openssl sha256 -binary | base64`
+        // TODO: test based on `cat public/data/test-bucket/test.txt.0.part.0 |
+        // openssl sha256 -binary | base64`
         let mut hasher = Sha256::new();
 
         let stream = tokio_util::io::ReaderStream::new(content);
@@ -139,7 +155,8 @@ impl BackendStorage for FSStorage {
         let size = tokio::io::copy(&mut ar, &mut file_content).await?;
         let hash = Base64::encode_string(&hasher.finalize());
 
-        let metadata_path = self.base_path.join(db).join(format!("{name_elt}.0.meta"));
+        let metadata_path =
+            self.base_path.join(db).join(format!("{name_elt}.0.meta"));
         let elt = ElementInfo {
             name: name_elt.to_string(),
             size,
@@ -159,7 +176,8 @@ impl BackendStorage for FSStorage {
         key: &str,
         mut writer: &mut T,
     ) -> anyhow::Result<u64> {
-        let ressource_path = self.base_path.join(db).join(format!("{key}.0.part.0"));
+        let ressource_path =
+            self.base_path.join(db).join(format!("{key}.0.part.0"));
         let mut file_content = tokio::fs::File::open(ressource_path).await?;
 
         let size = tokio::io::copy(&mut file_content, &mut writer).await?;
@@ -171,10 +189,12 @@ impl BackendStorage for FSStorage {
         &self,
         db: &str,
         _start_after: Option<&str>,
-    ) -> anyhow::Result<Pin<Box<dyn Stream<Item = anyhow::Result<String>>>>> {
+    ) -> anyhow::Result<Pin<Box<dyn Stream<Item = anyhow::Result<String>>>>>
+    {
         let ressource_path = self.base_path.join(db);
 
-        // We do a read_dir for now, it would be better to instead have an index IMO
+        // We do a read_dir for now, it would be better to instead have an index
+        // IMO
         let mut read_dir = tokio::fs::read_dir(ressource_path).await?;
         let a = async_stream::stream! {
             while let Ok(Some(entry)) = read_dir.next_entry().await {
@@ -192,9 +212,15 @@ impl BackendStorage for FSStorage {
         Ok(Box::pin(a))
     }
 
-    async fn delete_element_in_database(&self, db: &str, key: &str) -> anyhow::Result<()> {
-        let ressource_path = self.base_path.join(db).join(format!("{key}.0.part.0"));
-        let metadata_path = self.base_path.join(db).join(format!("{key}.0.meta"));
+    async fn delete_element_in_database(
+        &self,
+        db: &str,
+        key: &str,
+    ) -> anyhow::Result<()> {
+        let ressource_path =
+            self.base_path.join(db).join(format!("{key}.0.part.0"));
+        let metadata_path =
+            self.base_path.join(db).join(format!("{key}.0.meta"));
 
         let a = tokio::fs::remove_file(ressource_path);
         let b = tokio::fs::remove_file(metadata_path);
@@ -208,8 +234,9 @@ impl BackendStorage for FSStorage {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::tempdir;
+
+    use super::*;
 
     #[tokio::test]
     async fn simple_db_with_fs() {
@@ -248,7 +275,8 @@ mod tests {
         let db_name = "test_db";
         let db_info = storage.new_database(db_name).await.unwrap();
 
-        let retrieved_db_info = storage.database_metadata(db_name).await.unwrap().unwrap();
+        let retrieved_db_info =
+            storage.database_metadata(db_name).await.unwrap().unwrap();
         assert_eq!(db_info, retrieved_db_info);
     }
 
@@ -266,13 +294,21 @@ mod tests {
         let mut element_reader = std::io::Cursor::new(element_content);
 
         let element_info = storage
-            .insert_element_in_database(db_name, element_name, &mut element_reader)
+            .insert_element_in_database(
+                db_name,
+                element_name,
+                &mut element_reader,
+            )
             .await
             .unwrap();
 
         let mut retrieved_content = Vec::new();
         let size = storage
-            .get_element_in_database(db_name, element_name, &mut retrieved_content)
+            .get_element_in_database(
+                db_name,
+                element_name,
+                &mut retrieved_content,
+            )
             .await
             .unwrap();
 
@@ -293,7 +329,11 @@ mod tests {
 
         let element_name = "test_element";
         storage
-            .insert_element_in_database(db_name, element_name, &mut std::io::Cursor::new(b""))
+            .insert_element_in_database(
+                db_name,
+                element_name,
+                &mut std::io::Cursor::new(b""),
+            )
             .await
             .unwrap();
 
@@ -330,7 +370,11 @@ mod tests {
 
         let element_name = "test_element";
         storage
-            .insert_element_in_database(db_name, element_name, &mut std::io::Cursor::new(b""))
+            .insert_element_in_database(
+                db_name,
+                element_name,
+                &mut std::io::Cursor::new(b""),
+            )
             .await
             .unwrap();
 

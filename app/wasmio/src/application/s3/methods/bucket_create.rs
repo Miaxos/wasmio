@@ -1,17 +1,15 @@
-use crate::{
-    application::s3::axum::request_context::RequestContext, domain::storage::BackendDriver,
-};
-use axum::{
-    body::Body,
-    extract::State,
-    http::{header, StatusCode},
-    response::Response,
-};
+use axum::body::Body;
+use axum::extract::State;
+use axum::http::{header, StatusCode};
+use axum::response::Response;
 use axum_serde::xml::Xml;
 use serde_aws_types::types::CreateBucketConfiguration;
 use tracing::info;
 
-use crate::application::s3::{errors::S3HTTPError, state::S3State};
+use crate::application::s3::axum::request_context::RequestContext;
+use crate::application::s3::errors::S3HTTPError;
+use crate::application::s3::state::S3State;
+use crate::domain::storage::BackendDriver;
 
 pub async fn bucket_create_handle<T: BackendDriver>(
     req: RequestContext,

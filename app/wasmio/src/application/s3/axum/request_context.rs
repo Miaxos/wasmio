@@ -1,12 +1,8 @@
-use axum::{
-    async_trait,
-    extract::{
-        rejection::{HostRejection, PathRejection},
-        FromRequestParts, Host,
-    },
-    http::request::Parts,
-    response::IntoResponse,
-};
+use axum::async_trait;
+use axum::extract::rejection::{HostRejection, PathRejection};
+use axum::extract::{FromRequestParts, Host};
+use axum::http::request::Parts;
+use axum::response::IntoResponse;
 use axum_extra::extract::OptionalPath;
 use ulid::Ulid;
 
@@ -37,8 +33,15 @@ impl RequestContext {
         format!("{bucket}/{obj}", bucket = self.bucket(), obj = obj)
     }
 
-    pub fn from_error_code(&self, code: impl Into<S3ErrorCodeKind>) -> S3HTTPError {
-        S3HTTPError::custom(self.ressource(), self.request_id.to_string(), code.into())
+    pub fn from_error_code(
+        &self,
+        code: impl Into<S3ErrorCodeKind>,
+    ) -> S3HTTPError {
+        S3HTTPError::custom(
+            self.ressource(),
+            self.request_id.to_string(),
+            code.into(),
+        )
     }
 }
 
@@ -70,8 +73,12 @@ where
     // If anything goes wrong or no session is found, redirect to the auth page
     type Rejection = RequestContextRejection;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        let path = OptionalPath::<String>::from_request_parts(parts, state).await?;
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        let path =
+            OptionalPath::<String>::from_request_parts(parts, state).await?;
         let host = Host::from_request_parts(parts, state).await?;
 
         let request_id = Ulid::new();
@@ -79,11 +86,13 @@ where
         let bucket = match host.0.split('.').next() {
             Some(elt) => elt.to_string(),
             None => {
-                return Err(RequestContextRejection::Other(S3HTTPError::custom(
-                    "",
-                    request_id.to_string(),
-                    S3ErrorCodeKind::InvalidBucketName,
-                )));
+                return Err(RequestContextRejection::Other(
+                    S3HTTPError::custom(
+                        "",
+                        request_id.to_string(),
+                        S3ErrorCodeKind::InvalidBucketName,
+                    ),
+                ));
             }
         };
 

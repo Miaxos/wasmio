@@ -1,10 +1,8 @@
 use std::fmt::Display;
 
-use axum::{
-    body::Body,
-    http::StatusCode,
-    response::{IntoResponse, Response},
-};
+use axum::body::Body;
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 
@@ -34,8 +32,12 @@ impl S3ErrorCodeKind {
 
     fn message(&self) -> &'static str {
         match self {
-            S3ErrorCodeKind::InvalidBucketName => "The specified bucket is not valid.",
-            S3ErrorCodeKind::InternalError => "An internal error occurred. Try again.",
+            S3ErrorCodeKind::InvalidBucketName => {
+                "The specified bucket is not valid."
+            }
+            S3ErrorCodeKind::InternalError => {
+                "An internal error occurred. Try again."
+            }
         }
     }
 }

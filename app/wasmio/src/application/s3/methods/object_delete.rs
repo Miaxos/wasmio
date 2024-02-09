@@ -1,25 +1,15 @@
+use axum::extract::{Request, State};
+use axum::response::Response;
+use serde_aws_types::types::DeleteObjectRequestBuilder;
+use tracing::{info, warn};
 
-use tracing::warn;
-
-use crate::{
-    application::s3::{
-        axum::{
-            header_parse_bool, header_string_opt, request_context::RequestContext,
-        },
-        errors::S3ErrorCodeKind,
-        headers::{self},
-    },
-    domain::storage::BackendDriver,
-    infrastructure::axum::headers::Headers,
-};
-use axum::{
-    extract::{Request, State},
-    response::Response,
-};
-use serde_aws_types::types::{DeleteObjectRequestBuilder};
-use tracing::info;
-
-use crate::application::s3::{errors::S3HTTPError, state::S3State};
+use crate::application::s3::axum::request_context::RequestContext;
+use crate::application::s3::axum::{header_parse_bool, header_string_opt};
+use crate::application::s3::errors::{S3ErrorCodeKind, S3HTTPError};
+use crate::application::s3::headers::{self};
+use crate::application::s3::state::S3State;
+use crate::domain::storage::BackendDriver;
+use crate::infrastructure::axum::headers::Headers;
 
 pub async fn object_delete_handle<T: BackendDriver>(
     // TODO: Add version id from req

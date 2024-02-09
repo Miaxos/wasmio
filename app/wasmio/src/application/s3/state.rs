@@ -1,8 +1,6 @@
-use crate::{
-    application::state::AppState,
-    domain::storage::{BackendDriver, BucketStorage},
-    infrastructure::storage::FSStorage,
-};
+use crate::application::state::AppState;
+use crate::domain::storage::{BackendDriver, BucketStorage};
+use crate::infrastructure::storage::FSStorage;
 
 #[derive(Debug, Clone)]
 pub struct S3State<T: BackendDriver> {

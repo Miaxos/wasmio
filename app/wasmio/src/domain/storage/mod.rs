@@ -1,5 +1,6 @@
-use crate::infrastructure::storage::{BackendStorage, FSStorage};
 use std::fmt::Debug;
+
+use crate::infrastructure::storage::{BackendStorage, FSStorage};
 
 pub mod errors;
 use errors::BucketStorageError;
@@ -8,15 +9,17 @@ use serde_aws_types::types::{DeleteObjectRequest, PutObjectRequest};
 use tokio_util::io::StreamReader;
 use tracing::{error, warn};
 
-pub trait BackendDriver: BackendStorage + Debug + Send + Sync + Clone + 'static {}
+pub trait BackendDriver:
+    BackendStorage + Debug + Send + Sync + Clone + 'static
+{
+}
 impl BackendDriver for FSStorage {}
 
-/// The [BucketStorage] is the struct shared in the application which allow you to access to some
-/// [Bucket] and interact with those.
+/// The [BucketStorage] is the struct shared in the application which allow you
+/// to access to some [Bucket] and interact with those.
 ///
-/// For now, we implement the AWS S3 Api here as we have few methods, but it might be interesting
-/// to split it by domain.
-///
+/// For now, we implement the AWS S3 Api here as we have few methods, but it
+/// might be interesting to split it by domain.
 #[derive(Debug, Clone)]
 pub struct BucketStorage<T: BackendDriver> {
     backend_storage: T,
@@ -29,7 +32,10 @@ impl<T: BackendDriver> BucketStorage<T> {
         }
     }
 
-    pub async fn create_new_bucket(&self, bucket_name: &str) -> Result<(), BucketStorageError> {
+    pub async fn create_new_bucket(
+        &self,
+        bucket_name: &str,
+    ) -> Result<(), BucketStorageError> {
         let _db_info = self
             .backend_storage
             .new_database(bucket_name)
@@ -48,7 +54,8 @@ impl<T: BackendDriver> BucketStorage<T> {
         }: PutObjectRequest,
     ) -> Result<(), BucketStorageError> {
         let body = body.ok_or(BucketStorageError::Unknown)?;
-        let body_err = body.map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err));
+        let body_err = body
+            .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err));
         let mut body_reader = StreamReader::new(body_err);
 
         self.backend_storage
