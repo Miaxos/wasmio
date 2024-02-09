@@ -16,9 +16,12 @@ categories = ["network-programming"]
 
 [dependencies]
 anyhow.workspace = true
+async-stream = "0.3"
 axum = { workspace = true, features = ["macros"] }
 axum-serde = { version = "0.2", features = ["xml"] }
 axum-extra = { version = "0.9", features = ["typed-header"] }
+
+base64ct = { version = "1", features = ["alloc"] }
 
 config.workspace = true
 chrono = { version = "0.4", features = ["serde"] }

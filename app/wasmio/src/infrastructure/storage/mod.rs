@@ -1,8 +1,9 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::path::PathBuf;
 
 use axum::async_trait;
+use base64ct::{Base64, Encoding};
 use chrono::{DateTime, Utc};
-use futures::{future::join, StreamExt, TryStreamExt};
+use futures::{future::join, Stream, StreamExt, TryStreamExt};
 use sha2::{digest::generic_array::GenericArray, Digest, Sha256};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite};
 use tracing::warn;
@@ -28,8 +29,7 @@ pub trait BackendStorage: Send + Sync {
         &self,
         db: &str,
         start_after: Option<&str>,
-        name_elt: &str,
-    ) -> anyhow::Result<ElementInfo>;
+    ) -> anyhow::Result<Box<dyn Stream<Item = anyhow::Result<String>>>>;
 
     /// Get element from the database,
     async fn get_element_in_database<T: AsyncWrite + Send + Unpin, S: AsRef<str>>(
@@ -37,7 +37,7 @@ pub trait BackendStorage: Send + Sync {
         db: &str,
         key: &str,
         writer: &mut T,
-    ) -> anyhow::Result<Option<ElementInfo>>;
+    ) -> anyhow::Result<u64>;
 
     /// Put an element inside database
     async fn insert_element_in_database<R: AsyncRead + Unpin + Send>(
@@ -127,9 +127,11 @@ impl BackendStorage for FSStorage {
         content: &mut R,
     ) -> anyhow::Result<ElementInfo> {
         let now = Utc::now();
+
         let ressource_path = self.base_path.join(db).join(format!("{name_elt}.0.part.0"));
         let mut file_content = tokio::fs::File::create(ressource_path).await?;
 
+        // TODO: test based on `cat public/data/test-bucket/test.txt.0.part.0 | openssl sha256 -binary | base64`
         let mut hasher = Sha256::new();
 
         let stream = tokio_util::io::ReaderStream::new(content);
@@ -139,16 +141,19 @@ impl BackendStorage for FSStorage {
         }));
 
         let size = tokio::io::copy(&mut ar, &mut file_content).await?;
+        let hash = Base64::encode_string(&hasher.finalize());
 
         let metadata_path = self.base_path.join(db).join(format!("{name_elt}.0.meta"));
         let elt = ElementInfo {
             name: name_elt.to_string(),
             size,
             created_at: now,
-            checksum: unsafe { String::from_utf8_unchecked(hasher.finalize()[..].to_vec()) },
+            checksum: hash,
         };
+
         tokio::fs::write(metadata_path, serde_json::to_string(&elt)?).await?;
 
+        // TODO: Increasing the count
         Ok(elt)
     }
 
@@ -156,18 +161,39 @@ impl BackendStorage for FSStorage {
         &self,
         db: &str,
         key: &str,
-        writer: &mut T,
-    ) -> anyhow::Result<Option<ElementInfo>> {
-        unimplemented!()
+        mut writer: &mut T,
+    ) -> anyhow::Result<u64> {
+        let ressource_path = self.base_path.join(db).join(format!("{key}.0.part.0"));
+        let mut file_content = tokio::fs::File::open(ressource_path).await?;
+
+        let size = tokio::io::copy(&mut file_content, &mut writer).await?;
+
+        Ok(size)
     }
 
     async fn list_element_in_database<R: AsyncRead + Unpin>(
         &self,
         db: &str,
-        start_after: Option<&str>,
-        name_elt: &str,
-    ) -> anyhow::Result<ElementInfo> {
-        unimplemented!()
+        _start_after: Option<&str>,
+    ) -> anyhow::Result<Box<dyn Stream<Item = anyhow::Result<String>>>> {
+        let ressource_path = self.base_path.join(db);
+
+        // We do a read_dir for now, it would be better to instead have an index IMO
+        let mut read_dir = tokio::fs::read_dir(ressource_path).await?;
+        let a = async_stream::stream! {
+            while let Ok(Some(entry)) = read_dir.next_entry().await {
+                let name = entry
+                    .file_name()
+                    .into_string()
+                    .map_err(|_err| anyhow::anyhow!("Couldn't convert OsString to String."))?;
+
+                if name.ends_with(".meta") {
+                    yield Ok::<_, anyhow::Error>(name);
+                }
+            }
+        };
+
+        Ok(Box::new(a))
     }
 
     async fn delete_element_in_database<R: AsyncRead + Unpin>(
