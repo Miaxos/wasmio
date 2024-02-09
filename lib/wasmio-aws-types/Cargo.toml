@@ -1,5 +1,5 @@
 [package]
-name = "serde_aws_types"
+name = "wasmio-aws-types"
 version = "0.0.1"
 authors.workspace = true
 edition.workspace = true

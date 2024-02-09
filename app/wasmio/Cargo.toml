@@ -31,7 +31,7 @@ headers = "0.4"
 
 quick-xml = { version = "0.31", features = ["serialize"] }
 serde = { workspace = true, features = ["derive"] }
-serde_aws_types.workspace = true
+wasmio-aws-types.workspace = true
 serde_json = "1"
 
 hyper.workspace = true

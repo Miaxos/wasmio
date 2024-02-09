@@ -6,8 +6,8 @@ use axum::http::header::{
 };
 use axum::http::StatusCode;
 use axum::response::Response;
-use serde_aws_types::types::PutObjectRequestBuilder;
 use tracing::{info, warn};
+use wasmio_aws_types::types::PutObjectRequestBuilder;
 
 use crate::application::s3::axum::request_context::RequestContext;
 use crate::application::s3::axum::{header_parse, header_string_opt};

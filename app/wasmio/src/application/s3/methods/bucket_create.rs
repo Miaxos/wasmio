@@ -3,8 +3,8 @@ use axum::extract::State;
 use axum::http::{header, StatusCode};
 use axum::response::Response;
 use axum_serde::xml::Xml;
-use serde_aws_types::types::CreateBucketConfiguration;
 use tracing::info;
+use wasmio_aws_types::types::CreateBucketConfiguration;
 
 use crate::application::s3::axum::request_context::RequestContext;
 use crate::application::s3::errors::S3HTTPError;

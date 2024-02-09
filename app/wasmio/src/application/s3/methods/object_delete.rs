@@ -1,7 +1,7 @@
 use axum::extract::{Request, State};
 use axum::response::Response;
-use serde_aws_types::types::DeleteObjectRequestBuilder;
 use tracing::{info, warn};
+use wasmio_aws_types::types::DeleteObjectRequestBuilder;
 
 use crate::application::s3::axum::request_context::RequestContext;
 use crate::application::s3::axum::{header_parse_bool, header_string_opt};

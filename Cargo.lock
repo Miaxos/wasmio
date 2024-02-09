@@ -1374,17 +1374,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_aws_types"
-version = "0.0.1"
-dependencies = [
- "axum",
- "derivative",
- "derive_builder",
- "serde",
- "tokio",
-]
-
-[[package]]
 name = "serde_derive"
 version = "1.0.196"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1959,7 +1948,6 @@ dependencies = [
  "parking_lot",
  "quick-xml",
  "serde",
- "serde_aws_types",
  "serde_json",
  "sha2",
  "strum",
@@ -1972,6 +1960,18 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "ulid",
+ "wasmio-aws-types",
+]
+
+[[package]]
+name = "wasmio-aws-types"
+version = "0.0.1"
+dependencies = [
+ "axum",
+ "derivative",
+ "derive_builder",
+ "serde",
+ "tokio",
 ]
 
 [[package]]

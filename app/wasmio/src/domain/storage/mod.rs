@@ -5,9 +5,9 @@ use crate::infrastructure::storage::{BackendStorage, FSStorage};
 pub mod errors;
 use errors::BucketStorageError;
 use futures::TryStreamExt;
-use serde_aws_types::types::{DeleteObjectRequest, PutObjectRequest};
 use tokio_util::io::StreamReader;
 use tracing::{error, warn};
+use wasmio_aws_types::types::{DeleteObjectRequest, PutObjectRequest};
 
 pub trait BackendDriver:
     BackendStorage + Debug + Send + Sync + Clone + 'static

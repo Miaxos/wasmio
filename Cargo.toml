@@ -34,7 +34,7 @@ tokio = { version = "=1.35", default-features = false }
 tokio-util = "0.7"
 parking_lot = { version = "=0.12.1", features = ["nightly"] }
 
-serde_aws_types = { path = "./lib/serde_aws_types" }
+wasmio-aws-types = { path = "./lib/wasmio-aws-types" }
 
 [profile.dev]
 panic = "abort"
