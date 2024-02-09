@@ -6,7 +6,7 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 description = "WasmIO a S3 Implementation on steroid"
-readme = "README.md"
+readme = "../../README.md"
 keywords = [
     "wasm",
     "wasi",
