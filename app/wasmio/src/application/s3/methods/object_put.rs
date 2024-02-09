@@ -3,7 +3,7 @@ use tracing::warn;
 
 use crate::{
     application::s3::{
-        axum::request_context::RequestContext,
+        axum::{header_parse, header_string_opt, request_context::RequestContext},
         errors::S3ErrorCodeKind,
         headers::{self, X_AMZ_STORAGE_CLASS},
     },
@@ -26,15 +26,6 @@ use serde_aws_types::types::PutObjectRequestBuilder;
 use tracing::info;
 
 use crate::application::s3::{errors::S3HTTPError, state::S3State};
-
-fn header_string_opt<K: AsHeaderName>(key: K, map: &HeaderMap) -> Option<String> {
-    map.get(key)
-        .and_then(|x| x.to_str().map(|x| x.to_string()).ok())
-}
-
-fn header_parse<K: AsHeaderName, T: FromStr>(key: K, map: &HeaderMap) -> Option<T> {
-    header_string_opt(key, map).and_then(|x| x.parse::<T>().ok())
-}
 
 pub async fn object_put_handle<T: BackendDriver>(
     req: RequestContext,

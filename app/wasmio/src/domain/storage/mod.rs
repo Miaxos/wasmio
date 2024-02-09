@@ -4,7 +4,7 @@ use std::fmt::Debug;
 pub mod errors;
 use errors::BucketStorageError;
 use futures::TryStreamExt;
-use serde_aws_types::types::PutObjectRequest;
+use serde_aws_types::types::{DeleteObjectRequest, PutObjectRequest};
 use tokio_util::io::StreamReader;
 use tracing::{error, warn};
 
@@ -13,6 +13,10 @@ impl BackendDriver for FSStorage {}
 
 /// The [BucketStorage] is the struct shared in the application which allow you to access to some
 /// [Bucket] and interact with those.
+///
+/// For now, we implement the AWS S3 Api here as we have few methods, but it might be interesting
+/// to split it by domain.
+///
 #[derive(Debug, Clone)]
 pub struct BucketStorage<T: BackendDriver> {
     backend_storage: T,
@@ -49,6 +53,21 @@ impl<T: BackendDriver> BucketStorage<T> {
 
         self.backend_storage
             .insert_element_in_database(&bucket, &key, &mut body_reader)
+            .await
+            .map_err(|err| {
+                error!("{err:?}");
+                BucketStorageError::Unknown
+            })?;
+
+        Ok(())
+    }
+
+    pub async fn delete_object(
+        &self,
+        DeleteObjectRequest { bucket, key, .. }: DeleteObjectRequest,
+    ) -> Result<(), BucketStorageError> {
+        self.backend_storage
+            .delete_element_in_database(&bucket, &key)
             .await
             .map_err(|err| {
                 error!("{err:?}");

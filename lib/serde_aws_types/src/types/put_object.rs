@@ -3,9 +3,6 @@ use std::collections::HashMap;
 
 use derivative::Derivative;
 use derive_builder::Builder;
-use tokio::io::AsyncBufRead;
-
-pub type StreamingBody = Box<dyn AsyncBufRead + Unpin + Send>;
 
 #[derive(Derivative, Default, Builder)]
 #[derivative(Debug)]

@@ -1,9 +1,10 @@
-use axum::routing::put;
+use axum::routing::{delete, put};
 use axum::Router;
 
 use crate::domain::storage::BackendDriver;
 
 use super::methods::bucket_create::bucket_create_handle;
+use super::methods::object_delete::object_delete_handle;
 use super::methods::object_put::object_put_handle;
 use super::state::S3State;
 
@@ -20,6 +21,7 @@ impl<T: BackendDriver> S3Mapping<T> {
         Router::new()
             .route("/", put(bucket_create_handle))
             .route("/:key", put(object_put_handle))
+            .route("/:key", delete(object_delete_handle))
             .with_state(self.state)
     }
 }

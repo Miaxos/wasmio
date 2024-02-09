@@ -376,6 +376,6 @@ mod tests {
             .await
             .unwrap();
 
-        assert!(element_list_stream.next().await.is_none()); // Empty database should have no elements
+        assert!(element_list_stream.next().await.is_none());
     }
 }
