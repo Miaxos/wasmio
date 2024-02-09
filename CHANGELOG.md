@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.5](https://github.com/Miaxos/wasmio/compare/wasmio-v0.0.4...wasmio-v0.0.5) - 2024-02-09
+
+### Other
+- update Cargo.lock dependencies
+
 ## [0.0.4](https://github.com/Miaxos/wasmio/compare/wasmio-v0.0.3...wasmio-v0.0.4) - 2024-02-09
 
 ### Other
