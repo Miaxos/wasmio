@@ -16,6 +16,7 @@ pub struct RequestContext {
 }
 
 impl RequestContext {
+    #[allow(dead_code)]
     pub fn request_id(&self) -> &Ulid {
         &self.request_id
     }

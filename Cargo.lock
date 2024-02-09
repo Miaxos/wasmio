@@ -2164,28 +2164,3 @@ checksum = "56c1936c4cc7a1c9ab21a1ebb602eb942ba868cbd44a99cb7cdc5892335e1c85"
 dependencies = [
  "linked-hash-map",
 ]
-
-[[patch.unused]]
-name = "hyper-rustls"
-version = "0.25.0"
-source = "git+https://github.com/wasix-org/hyper-rustls.git?branch=v0.25.0#bb8833007b0d0470799c5efdf7655f36e18dc113"
-
-[[patch.unused]]
-name = "hyper-tls"
-version = "0.5.0"
-source = "git+https://github.com/wasix-org/hyper-tls.git?branch=master#74044e32b5eb6cdc8a70978a1f584dc7b0748932"
-
-[[patch.unused]]
-name = "ring"
-version = "0.17.7"
-source = "git+https://github.com/wasix-org/ring.git?branch=0.17.7#be27e9a6daa1bdae897fb9cd3c82d0fc6b86e4c9"
-
-[[patch.unused]]
-name = "rustls"
-version = "0.22.2"
-source = "git+https://github.com/wasix-org/rustls.git?branch=v0.22.2#b18079522ddff9e538a5110d7211ed9b479b0cd5"
-
-[[patch.unused]]
-name = "rustls-native-certs"
-version = "0.6.3"
-source = "git+https://github.com/wasix-org/rustls-native-certs.git?branch=v0.6.3#57f7caa7f4fbfcfad6412c5c3b9fe1dd583f0a50"

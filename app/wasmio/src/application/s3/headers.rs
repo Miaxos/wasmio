@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use axum::http::HeaderName;
 
 /// declare http header names from https://github.com/datenlord/s3-server/blob/master/src/headers.rs

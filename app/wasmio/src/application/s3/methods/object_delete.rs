@@ -16,7 +16,7 @@ pub async fn object_delete_handle<T: BackendDriver>(
     req: RequestContext,
     Headers(map): Headers,
     State(state): State<S3State<T>>,
-    request: Request,
+    _request: Request,
 ) -> Result<Response, S3HTTPError> {
     info!(
         message = "Trying to delete an element",

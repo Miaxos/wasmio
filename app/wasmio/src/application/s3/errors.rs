@@ -26,7 +26,6 @@ impl S3ErrorCodeKind {
         match self {
             S3ErrorCodeKind::InvalidBucketName => StatusCode::BAD_REQUEST,
             S3ErrorCodeKind::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
-            _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
