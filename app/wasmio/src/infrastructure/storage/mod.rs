@@ -362,4 +362,20 @@ mod tests {
 
         assert!(!found_element);
     }
+
+    #[tokio::test]
+    async fn test_list_empty_database() {
+        let temp_dir = tempdir().expect("Failed to create temporary directory");
+        let storage = FSStorage::new(temp_dir.path().to_path_buf());
+
+        let db_name = "empty_db";
+        storage.new_database(db_name).await.unwrap();
+
+        let mut element_list_stream = storage
+            .list_element_in_database(db_name, None)
+            .await
+            .unwrap();
+
+        assert!(element_list_stream.next().await.is_none()); // Empty database should have no elements
+    }
 }
