@@ -2,8 +2,9 @@ use std::{collections::HashMap, path::PathBuf};
 
 use axum::async_trait;
 use chrono::{DateTime, Utc};
-use futures::future::join;
-use tokio::io::{AsyncRead, AsyncWrite};
+use futures::{future::join, StreamExt, TryStreamExt};
+use sha2::{digest::generic_array::GenericArray, Digest, Sha256};
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite};
 use tracing::warn;
 
 /// Implement this trait which define the backend storage used to store data
@@ -65,13 +66,10 @@ pub struct DatabaseInfo {
 #[derive(Debug, serde::Serialize, serde::Deserialize, Default)]
 pub struct ElementInfo {
     name: String,
-    size: usize,
+    size: u64,
     created_at: DateTime<Utc>,
-    last_modified: DateTime<Utc>,
+    /// Only using sha256 for now
     checksum: String,
-    version: usize,
-    /// User metadata
-    metadata: HashMap<String, String>,
 }
 
 // -------------------------------------------------------------------------------
@@ -83,8 +81,6 @@ pub struct FSStorage {
 
 impl FSStorage {
     pub fn new(base: PathBuf) -> Self {
-        let _ = std::fs::create_dir(base.join("data"));
-
         Self { base_path: base }
     }
 }
@@ -130,12 +126,30 @@ impl BackendStorage for FSStorage {
         name_elt: &str,
         content: &mut R,
     ) -> anyhow::Result<ElementInfo> {
-        let ressource_path = self.base_path.join(format!("{db}/{name_elt}.0.part.0"));
+        let now = Utc::now();
+        let ressource_path = self.base_path.join(db).join(format!("{name_elt}.0.part.0"));
+        let mut file_content = tokio::fs::File::create(ressource_path).await?;
 
-        let mut file = tokio::fs::File::open(ressource_path).await?;
-        tokio::io::copy(content, &mut file).await?;
+        let mut hasher = Sha256::new();
 
-        Ok(Default::default())
+        let stream = tokio_util::io::ReaderStream::new(content);
+        let mut ar = tokio_util::io::StreamReader::new(stream.map_ok(|x| {
+            hasher.update(&*x);
+            x
+        }));
+
+        let size = tokio::io::copy(&mut ar, &mut file_content).await?;
+
+        let metadata_path = self.base_path.join(db).join(format!("{name_elt}.0.meta"));
+        let elt = ElementInfo {
+            name: name_elt.to_string(),
+            size,
+            created_at: now,
+            checksum: unsafe { String::from_utf8_unchecked(hasher.finalize()[..].to_vec()) },
+        };
+        tokio::fs::write(metadata_path, serde_json::to_string(&elt)?).await?;
+
+        Ok(elt)
     }
 
     async fn get_element_in_database<T: AsyncWrite + Send + Unpin, S: AsRef<str>>(

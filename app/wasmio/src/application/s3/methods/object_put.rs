@@ -21,12 +21,8 @@ use axum::{
         HeaderMap, StatusCode,
     },
     response::Response,
-    Extension,
 };
-use axum_serde::xml::Xml;
-use serde_aws_types::types::{
-    PutObjectRequest, PutObjectRequestBuilder, PutObjectRequestBuilderError,
-};
+use serde_aws_types::types::PutObjectRequestBuilder;
 use tracing::info;
 
 use crate::application::s3::{errors::S3HTTPError, state::S3State};
