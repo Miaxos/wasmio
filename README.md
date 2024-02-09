@@ -1,6 +1,22 @@
 # wasmio
 S3 Backed Server for Wasmer
 
+```
+ ▄     ▄ ▄▄▄▄▄▄ ▄▄▄▄▄▄▄ ▄▄   ▄▄ ▄▄▄ ▄▄▄▄▄▄▄ 
+█ █ ▄ █ █      █       █  █▄█  █   █       █
+█ ██ ██ █  ▄   █  ▄▄▄▄▄█       █   █   ▄   █
+█       █ █▄█  █ █▄▄▄▄▄█       █   █  █ █  █
+█       █      █▄▄▄▄▄  █       █   █  █▄█  █
+█   ▄   █  ▄   █▄▄▄▄▄█ █ ██▄██ █   █       █
+█▄▄█ █▄▄█▄█ █▄▄█▄▄▄▄▄▄▄█▄█   █▄█▄▄▄█▄▄▄▄▄▄▄█
+```
+
+[![release](https://github.com/Miaxos/wasmio/actions/workflows/release.yml/badge.svg)](https://github.com/Miaxos/wasmio/actions/workflows/release.yml)
+[![Crates.io version](https://img.shields.io/crates/v/wasmio.svg)](https://crates.io/crates/wasmio)
+[![dependency status](https://deps.rs/repo/github/miaxos/wasmio/status.svg)](https://deps.rs/repo/github/miaxos/wasmio)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/miaxos/wasmio/compare)
+
+
 ## Idea
 
 Wasmer allow file storage with mounted volumes, with this kind of backend we'll
