@@ -1,7 +1,7 @@
 use axum::async_trait;
 use axum::body::Body;
 use axum::extract::FromRequest;
-use axum::http::{header, Method, StatusCode};
+use axum::http::{header, Method, Request, StatusCode};
 use axum::response::Response;
 use axum_serde::xml::Xml;
 use tracing::{error, info};
@@ -22,24 +22,28 @@ pub struct BucketCreateHandler;
 impl S3Handler for BucketCreateHandler {
     #[inline]
     fn is_match(&self, ctx: &Context) -> bool {
-        ctx.request.method() == Method::PUT
+        ctx.method() == Method::PUT
     }
 
     async fn handle<T: BackendDriver>(
         &self,
-        ctx: Context,
+        mut ctx: Context,
         state: S3State<T>,
     ) -> Result<Response, S3Error> {
+        let body = ctx.body();
         let bucket_name = ctx.expect_bucket()?;
 
-        let request = ctx.request;
+        // Useless clone, but it'll do for now;
+        let parts = ctx.parts.clone();
+        let request = Request::from_parts(parts, body);
+
         let _input =
             Xml::<CreateBucketConfiguration>::from_request(request, &())
                 .await
                 .map_err(|_| S3ErrorCodeKind::MalformedXML)?;
 
         let request = CreateBucketRequestBuilder::default()
-            .bucket(&bucket_name)
+            .bucket(bucket_name)
             .build();
 
         if let Err(err) = request {

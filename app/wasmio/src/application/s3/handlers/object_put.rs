@@ -29,30 +29,30 @@ impl S3Handler for ObjectPutHandler {
     #[inline]
     fn is_match(&self, ctx: &Context) -> bool {
         // Only support normal put for now, multipart later
-        ctx.request.method() == Method::PUT
+        ctx.method() == Method::PUT
     }
 
     async fn handle<T: BackendDriver>(
         &self,
-        ctx: Context,
+        mut ctx: Context,
         state: S3State<T>,
     ) -> Result<Response, S3Error> {
-        let bucket_name = ctx.expect_bucket()?;
-        let request = ctx.request;
+        let body = ctx.body();
+        let (bucket_name, key) = ctx.expect_object()?;
 
         info!(
             message = "Trying to insert a new element",
             bucket = %bucket_name,
+            key = %key,
         );
 
-        let (parts, body) = request.into_parts();
         // switch to https://docs.rs/http-body-util/latest/http_body_util/struct.BodyStream.html
         // to have trailers which will be needed for the full implementation
         let stream: BodyDataStream = body.into_data_stream();
-        let map = parts.headers;
+        let map = &ctx.parts.headers;
 
         let request = PutObjectRequestBuilder::default()
-            .bucket(&bucket_name)
+            .bucket(bucket_name)
             .body(Some(stream))
             .content_length(header_parse(CONTENT_LENGTH, &map).map_err(
                 |_err| {

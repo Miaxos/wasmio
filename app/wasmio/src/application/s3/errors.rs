@@ -219,3 +219,27 @@ impl From<BucketStorageError> for S3Error {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use axum::response::IntoResponse;
+    use http_body_util::BodyExt;
+
+    use super::{S3ErrorCodeKind, S3HTTPError};
+
+    #[tokio::test]
+    async fn simple_response_error() {
+        let response =
+            S3HTTPError::custom("test", "blbl", S3ErrorCodeKind::InternalError)
+                .into_response();
+
+        insta::assert_debug_snapshot!(response);
+        let body = response.into_body().collect().await.unwrap();
+
+        let result = String::from_utf8(body.to_bytes().to_vec()).unwrap();
+        insta::assert_display_snapshot!(result, @r###"
+        <?xml version="1.0" encoding="UTF-8"?>
+        <Error><code>InternalError</code><message>An internal error occurred. Try again.</message><ressource>test</ressource><request_id>blbl</request_id></Error>
+        "###);
+    }
+}

@@ -37,9 +37,10 @@ impl<T: BackendDriver> S3Mapping<T> {
                 async move {
                     let context = Context::new(req)?;
                     let r_id = context.request_id();
+                    let resource = context.resource();
                     let result =
                         handlers.handle(context, state).await.map_err(|err| {
-                            S3HTTPError::custom("", r_id.to_string(), err)
+                            S3HTTPError::custom(resource, r_id.to_string(), err)
                         });
 
                     result

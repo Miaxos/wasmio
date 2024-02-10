@@ -1,7 +1,9 @@
 use axum::async_trait;
 use axum::body::Body;
-use axum::http::Request;
+use axum::http::request::Parts;
+use axum::http::{Method, Request};
 use axum::response::Response;
+use tracing::error;
 use ulid::Ulid;
 
 use super::errors::{S3Error, S3ErrorCodeKind, S3HTTPError};
@@ -13,8 +15,9 @@ use crate::domain::storage::BackendDriver;
 #[derive(Debug)]
 pub struct Context {
     pub request_id: Ulid,
-    pub request: Request<Body>,
-    pub path: S3Path,
+    pub parts: Parts,
+    pub body: Body,
+    path: S3Path,
 }
 
 impl Context {
@@ -25,25 +28,62 @@ impl Context {
 
         let path = S3Path::from_part(&request_id, &parts)?;
 
-        let request = Request::from_parts(parts, body);
-
         Ok(Self {
             request_id,
-            request,
+            parts,
+            body,
             path,
         })
     }
 
-    pub fn bucket_name(&self) -> Option<String> {
-        todo!()
+    pub fn expect_bucket(&self) -> Result<&String, S3Error> {
+        match &self.path {
+            S3Path::Bucket { bucket } => Ok(bucket),
+            _ => {
+                error!("You should have a bucket here, weird, investigate.");
+                Err(S3Error::invalid_request("You should have a Bucket here."))
+            }
+        }
     }
 
-    pub fn expect_bucket(&self) -> Result<String, S3Error> {
-        Err(S3ErrorCodeKind::InvalidBucketName.into())
+    pub fn expect_object(&self) -> Result<(&String, &String), S3Error> {
+        match &self.path {
+            S3Path::Object { bucket, key } => Ok((bucket, key)),
+            _ => {
+                error!("You should have an object here, weird, investigate.");
+                Err(S3Error::invalid_request("You should have an Object here."))
+            }
+        }
+    }
+
+    pub fn expect_root(&self) -> Result<(), S3Error> {
+        match &self.path {
+            S3Path::Root => Ok(()),
+            _ => {
+                error!("You should have root here, weird, investigate.");
+                Err(S3Error::invalid_request("You should have a Root here."))
+            }
+        }
+    }
+
+    pub fn body(&mut self) -> Body {
+        std::mem::take(&mut self.body)
     }
 
     pub fn request_id(&self) -> Ulid {
         self.request_id
+    }
+
+    pub fn resource(&self) -> String {
+        match &self.path {
+            S3Path::Root => "/".to_string(),
+            S3Path::Bucket { bucket } => format!("/{bucket}/"),
+            S3Path::Object { bucket, key } => format!("/{bucket}/{key}"),
+        }
+    }
+
+    pub fn method(&self) -> &Method {
+        &self.parts.method
     }
 }
 
@@ -76,8 +116,8 @@ impl S3Handler for VisitorNil {
 
     async fn handle<T: BackendDriver>(
         &self,
-        ctx: Context,
-        state: S3State<T>,
+        _ctx: Context,
+        _state: S3State<T>,
     ) -> Result<Response, S3Error> {
         unreachable!("shouldn't be called.")
     }
