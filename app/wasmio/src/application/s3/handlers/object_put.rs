@@ -32,7 +32,7 @@ impl S3Handler for ObjectPutHandler {
         // Only support normal put for now, multipart later
         if_chain! {
             if ctx.method() == Method::PUT;
-            if ctx.expect_object().is_ok();
+            if ctx.path().is_object();
             then {
                 true
             } else {

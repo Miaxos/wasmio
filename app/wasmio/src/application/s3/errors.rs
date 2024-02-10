@@ -169,7 +169,7 @@ impl S3HTTPError {
 pub struct Error {
     pub code: String,
     pub message: String,
-    pub ressource: String,
+    pub resource: String,
     pub request_id: String,
 }
 
@@ -178,7 +178,7 @@ impl IntoResponse for S3HTTPError {
         let err = match quick_xml::se::to_string(&Error {
             code: self.kind.to_string(),
             message: self.kind.message().to_string(),
-            ressource: self.ressource,
+            resource: self.ressource,
             request_id: self.request_id,
         }) {
             Ok(elt) => elt,
@@ -235,7 +235,7 @@ mod tests {
         let result = String::from_utf8(body.to_bytes().to_vec()).unwrap();
         insta::assert_display_snapshot!(result, @r###"
         <?xml version="1.0" encoding="UTF-8"?>
-        <Error><code>InternalError</code><message>An internal error occurred. Try again.</message><ressource>test</ressource><request_id>blbl</request_id></Error>
+        <Error><code>InternalError</code><message>An internal error occurred. Try again.</message><resource>test</resource><request_id>blbl</request_id></Error>
         "###);
     }
 }

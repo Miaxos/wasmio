@@ -33,7 +33,7 @@ impl S3Handler for ObjectDeleteHandler {
     fn is_match(&self, ctx: &Context) -> bool {
         if_chain! {
             if ctx.method() == Method::DELETE;
-            if ctx.expect_object().is_ok();
+            if ctx.path().is_object();
             then {
                 true
             } else {

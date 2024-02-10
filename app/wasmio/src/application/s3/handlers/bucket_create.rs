@@ -25,7 +25,7 @@ impl S3Handler for BucketCreateHandler {
     fn is_match(&self, ctx: &Context) -> bool {
         if_chain! {
             if ctx.method() == Method::PUT;
-            if ctx.expect_bucket().is_ok();
+            if ctx.path().is_bucket();
             then {
                 true
             } else {

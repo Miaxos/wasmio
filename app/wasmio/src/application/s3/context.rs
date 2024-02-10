@@ -1,7 +1,7 @@
 use axum::async_trait;
 use axum::body::Body;
 use axum::http::request::Parts;
-use axum::http::{Method, Request};
+use axum::http::{Method, Request, StatusCode};
 use axum::response::Response;
 use tracing::error;
 use ulid::Ulid;
@@ -34,6 +34,10 @@ impl Context {
             body,
             path,
         })
+    }
+
+    pub fn path(&self) -> &S3Path {
+        &self.path
     }
 
     pub fn expect_bucket(&self) -> Result<&String, S3Error> {
@@ -119,7 +123,7 @@ impl S3Handler for VisitorNil {
         _ctx: Context,
         _state: S3State<T>,
     ) -> Result<Response, S3Error> {
-        unreachable!("shouldn't be called.")
+        Err(S3Error::invalid_request("This pattern has not been implemented yet, feel free to drop an issue at `https://github.com/miaxos/wasmio`. 💜"))
     }
 }
 
@@ -160,9 +164,9 @@ impl<A: S3Handler + Send + Sync, B: S3Handler + Send + Sync> S3Handler
         state: S3State<T>,
     ) -> Result<Response, S3Error> {
         if self.0.is_match(&ctx) {
-            return self.0.handle(ctx, state).await;
+            self.0.handle(ctx, state).await
+        } else {
+            self.1.handle(ctx, state).await
         }
-
-        self.1.handle(ctx, state).await
     }
 }
