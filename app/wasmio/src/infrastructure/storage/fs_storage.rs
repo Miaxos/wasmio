@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use std::io::ErrorKind;
 use std::path::PathBuf;
 use std::pin::Pin;
 
@@ -26,12 +27,22 @@ impl FSStorage {
 
 #[derive(Debug, thiserror::Error)]
 pub enum FSError {
+    // It's depending on the context in fact, will need to modify this
     #[error("Database already exist")]
     AlreadyExist,
-    #[error("fallback io: {0}")]
-    OtherIO(#[from] std::io::Error),
     #[error("fallback serde: {0}")]
     Serde(#[from] serde_json::Error),
+    #[error("IO: {0}")]
+    Other(std::io::Error),
+}
+
+impl From<std::io::Error> for FSError {
+    fn from(value: std::io::Error) -> Self {
+        match value.kind() {
+            ErrorKind::AlreadyExists => Self::AlreadyExist,
+            _ => Self::Other(value),
+        }
+    }
 }
 
 #[async_trait]
@@ -56,17 +67,8 @@ impl BackendStorage for FSStorage {
         let (write_metadata_task, write_dir_task) =
             join(write_metadata, write_dir).await;
 
-        match (write_metadata_task, write_dir_task) {
-            (Ok(_), Ok(_)) => {}
-            (Err(e), _) | (_, Err(e)) => {
-                return Err(match e.kind() {
-                    tokio::io::ErrorKind::AlreadyExists => {
-                        Self::Error::AlreadyExist
-                    }
-                    _ => Self::Error::OtherIO(e),
-                });
-            }
-        };
+        write_metadata_task?;
+        write_dir_task?;
 
         Ok(db_info)
     }
@@ -74,7 +76,7 @@ impl BackendStorage for FSStorage {
     async fn database_metadata(
         &self,
         name: &str,
-    ) -> anyhow::Result<Option<DatabaseInfo>> {
+    ) -> Result<Option<DatabaseInfo>, Self::Error> {
         let ressource_path = self.base_path.join(format!("{name}.meta"));
 
         if let Err(err) = tokio::fs::metadata(&ressource_path).await {
@@ -93,7 +95,7 @@ impl BackendStorage for FSStorage {
         db: &str,
         name_elt: &str,
         content: &mut R,
-    ) -> anyhow::Result<ElementInfo> {
+    ) -> Result<ElementInfo, Self::Error> {
         let now = Utc::now();
 
         let ressource_path =

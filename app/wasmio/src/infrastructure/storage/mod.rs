@@ -36,7 +36,7 @@ pub trait BackendStorage: Send + Sync {
     async fn database_metadata(
         &self,
         name: &str,
-    ) -> anyhow::Result<Option<DatabaseInfo>>;
+    ) -> Result<Option<DatabaseInfo>, Self::Error>;
 
     /// List elements from the database,
     async fn list_element_in_database(
@@ -59,7 +59,7 @@ pub trait BackendStorage: Send + Sync {
         db: &str,
         name_elt: &str,
         content: &mut R,
-    ) -> anyhow::Result<ElementInfo>;
+    ) -> Result<ElementInfo, Self::Error>;
 
     /// Put an element inside database
     async fn delete_element_in_database(
