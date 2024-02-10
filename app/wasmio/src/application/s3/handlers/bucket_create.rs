@@ -48,7 +48,7 @@ impl S3Handler for BucketCreateHandler {
         let bucket_name = ctx.expect_bucket()?;
 
         // Useless clone, but it'll do for now;
-        let parts = ctx.parts.clone();
+        let parts = ctx.parts().clone();
         let request = Request::from_parts(parts, body);
 
         let _input =

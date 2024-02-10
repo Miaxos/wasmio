@@ -149,8 +149,9 @@ impl BackendStorage for FSStorage {
         &self,
         db: &str,
         _start_after: Option<&str>,
-    ) -> anyhow::Result<Pin<Box<dyn Stream<Item = anyhow::Result<String>>>>>
-    {
+    ) -> anyhow::Result<
+        Pin<Box<dyn Stream<Item = anyhow::Result<String>> + Send>>,
+    > {
         let ressource_path = self.base_path.join(db);
 
         // We do a read_dir for now, it would be better to instead have an index

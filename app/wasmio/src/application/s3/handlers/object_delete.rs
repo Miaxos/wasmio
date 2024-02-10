@@ -60,7 +60,7 @@ impl S3Handler for ObjectDeleteHandler {
             key = %key,
         );
 
-        let map = &ctx.parts.headers;
+        let map = &ctx.parts().headers;
 
         let request = DeleteObjectRequestBuilder::default()
             .bucket(bucket_name)

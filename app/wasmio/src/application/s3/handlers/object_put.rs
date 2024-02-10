@@ -63,7 +63,7 @@ impl S3Handler for ObjectPutHandler {
         // switch to https://docs.rs/http-body-util/latest/http_body_util/struct.BodyStream.html
         // to have trailers which will be needed for the full implementation
         let stream: BodyDataStream = body.into_data_stream();
-        let map = &ctx.parts.headers;
+        let map = &ctx.parts().headers;
 
         let request = PutObjectRequestBuilder::default()
             .bucket(bucket_name)

@@ -43,7 +43,9 @@ pub trait BackendStorage: Send + Sync {
         &self,
         db: &str,
         start_after: Option<&str>,
-    ) -> anyhow::Result<Pin<Box<dyn Stream<Item = anyhow::Result<String>>>>>;
+    ) -> anyhow::Result<
+        Pin<Box<dyn Stream<Item = anyhow::Result<String>> + Send>>,
+    >;
 
     /// Get element from the database,
     async fn get_element_in_database<T: AsyncWrite + Send + Unpin>(

@@ -1,11 +1,13 @@
 use derivative::Derivative;
 use derive_builder::Builder;
+use serde::{Deserialize, Serialize};
 
 use super::Owner;
 
-#[derive(Derivative, Default, Builder)]
+#[derive(Derivative, Default, Builder, Serialize, Deserialize)]
 #[derivative(Debug)]
 #[builder(pattern = "owned", setter(into), default)]
+#[serde(rename_all = "PascalCase")]
 /// An object consists of data and its descriptive metadata.
 pub struct Object {
     /// The entity tag is a hash of the object. The ETag reflects changes only

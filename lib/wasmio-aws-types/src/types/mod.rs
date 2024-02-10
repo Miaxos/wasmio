@@ -20,6 +20,13 @@ pub use delete_object::{
 
 mod list_object;
 
+mod list_object_v2;
+pub use list_object_v2::{
+    ListObjectsV2Output, ListObjectsV2OutputBuilder,
+    ListObjectsV2OutputBuilderError, ListObjectsV2Request,
+    ListObjectsV2RequestBuilder, ListObjectsV2RequestBuilderError,
+};
+
 mod common;
 pub use common::{CommonPrefix, CommonPrefixBuilder, CommonPrefixBuilderError};
 

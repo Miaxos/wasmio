@@ -4,13 +4,14 @@ use crate::infrastructure::storage::{BackendStorage, FSStorage};
 
 pub mod errors;
 use errors::BucketStorageError;
-use futures::TryStreamExt;
+use futures::{StreamExt, TryStreamExt};
 use tokio_util::io::StreamReader;
 use tracing::{error, warn};
 use wasmio_aws_types::types::{
     CreateBucketOutput, CreateBucketOutputBuilder, CreateBucketRequest,
     DeleteObjectOutput, DeleteObjectOutputBuilder, DeleteObjectRequest,
-    PutObjectOutput, PutObjectOutputBuilder, PutObjectRequest,
+    ListObjectsV2Output, ListObjectsV2Request, Object, PutObjectOutput,
+    PutObjectOutputBuilder, PutObjectRequest,
 };
 
 pub trait BackendDriver:
@@ -92,5 +93,37 @@ where
         Ok(DeleteObjectOutputBuilder::default()
             .build()
             .map_err(|_err| BucketStorageError::Unknown)?)
+    }
+
+    pub async fn list_object_v2(
+        &self,
+        ListObjectsV2Request { bucket, .. }: ListObjectsV2Request,
+    ) -> Result<ListObjectsV2Output, BucketStorageError> {
+        let mut s = self
+            .backend_storage
+            .list_element_in_database(&bucket, None)
+            .await
+            .map_err(|_| BucketStorageError::Unknown)?;
+
+        let mut contents: Vec<Object> = Vec::new();
+        while let Some(elt) = s.next().await {
+            match elt {
+                Ok(elt) => {
+                    contents.push(Object {
+                        key: Some(elt),
+                        ..Default::default()
+                    });
+                }
+                Err(err) => {
+                    warn!("{err:?}");
+                }
+            }
+        }
+
+        let result = ListObjectsV2Output {
+            contents: Some(contents),
+            ..Default::default()
+        };
+        Ok(result)
     }
 }

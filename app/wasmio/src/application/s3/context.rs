@@ -17,7 +17,7 @@ use crate::infrastructure::storage::BackendStorage;
 #[derive(Debug)]
 pub struct Context {
     pub request_id: Ulid,
-    pub parts: Parts,
+    parts: Parts,
     pub body: Body,
     path: S3Path,
 }
@@ -36,6 +36,10 @@ impl Context {
             body,
             path,
         })
+    }
+
+    pub fn parts(&self) -> &Parts {
+        &self.parts
     }
 
     pub fn path(&self) -> &S3Path {
