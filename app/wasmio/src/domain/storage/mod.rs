@@ -7,7 +7,11 @@ use errors::BucketStorageError;
 use futures::TryStreamExt;
 use tokio_util::io::StreamReader;
 use tracing::{error, warn};
-use wasmio_aws_types::types::{DeleteObjectRequest, PutObjectRequest};
+use wasmio_aws_types::types::{
+    CreateBucketOutput, CreateBucketOutputBuilder, CreateBucketRequest,
+    DeleteObjectRequest, PutObjectOutput, PutObjectOutputBuilder,
+    PutObjectRequest,
+};
 
 pub trait BackendDriver:
     BackendStorage + Debug + Send + Sync + Clone + 'static
@@ -34,17 +38,19 @@ impl<T: BackendDriver> BucketStorage<T> {
 
     pub async fn create_new_bucket(
         &self,
-        bucket_name: &str,
-    ) -> Result<(), BucketStorageError> {
-        let _db_info = self
-            .backend_storage
-            .new_database(bucket_name)
-            .await
-            .map_err(|err| {
-                warn!("{err:?}");
-                BucketStorageError::Unknown
-            })?;
-        Ok(())
+        CreateBucketRequest { bucket, .. }: CreateBucketRequest,
+    ) -> Result<CreateBucketOutput, BucketStorageError> {
+        let _db_info =
+            self.backend_storage.new_database(&bucket).await.map_err(
+                |err| {
+                    warn!("{err:?}");
+                    BucketStorageError::Unknown
+                },
+            )?;
+
+        Ok(CreateBucketOutputBuilder::default()
+            .build()
+            .map_err(|_err| BucketStorageError::Unknown)?)
     }
 
     pub async fn put_object(
@@ -52,7 +58,7 @@ impl<T: BackendDriver> BucketStorage<T> {
         PutObjectRequest {
             bucket, key, body, ..
         }: PutObjectRequest,
-    ) -> Result<(), BucketStorageError> {
+    ) -> Result<PutObjectOutput, BucketStorageError> {
         let body = body.ok_or(BucketStorageError::Unknown)?;
         let body_err = body
             .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err));
@@ -66,7 +72,10 @@ impl<T: BackendDriver> BucketStorage<T> {
                 BucketStorageError::Unknown
             })?;
 
-        Ok(())
+        Ok(PutObjectOutputBuilder::default()
+            .e_tag(Some("unimplemented".to_string()))
+            .build()
+            .map_err(|_err| BucketStorageError::Unknown)?)
     }
 
     pub async fn delete_object(

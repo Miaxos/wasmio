@@ -1,7 +1,8 @@
 use std::str::FromStr;
 
 use axum::http::header::AsHeaderName;
-use axum::http::HeaderMap;
+use axum::http::response::Builder;
+use axum::http::{HeaderMap, HeaderName, HeaderValue};
 
 pub mod request_context;
 
@@ -38,4 +39,30 @@ pub fn header_parse_bool<K: AsHeaderName>(
             .ok()
             .flatten()
     })
+}
+
+pub trait RequestExt {
+    /// Appends an optional header to this response builder.
+    fn header_opt<K, V>(self, key: K, value: Option<V>) -> Builder
+    where
+        HeaderName: TryFrom<K>,
+        <HeaderName as TryFrom<K>>::Error: Into<axum::http::Error>,
+        HeaderValue: TryFrom<V>,
+        <HeaderValue as TryFrom<V>>::Error: Into<axum::http::Error>;
+}
+
+impl RequestExt for Builder {
+    fn header_opt<K, V>(self, key: K, value: Option<V>) -> Builder
+    where
+        HeaderName: TryFrom<K>,
+        <HeaderName as TryFrom<K>>::Error: Into<axum::http::Error>,
+        HeaderValue: TryFrom<V>,
+        <HeaderValue as TryFrom<V>>::Error: Into<axum::http::Error>,
+    {
+        if let Some(value) = value {
+            self.header(key, value)
+        } else {
+            self
+        }
+    }
 }

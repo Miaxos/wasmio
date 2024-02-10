@@ -11,7 +11,9 @@ use tracing::{error, info, warn};
 use wasmio_aws_types::types::PutObjectRequestBuilder;
 
 use crate::application::s3::axum::request_context::RequestContext;
-use crate::application::s3::axum::{header_parse, header_string_opt};
+use crate::application::s3::axum::{
+    header_parse, header_string_opt, RequestExt,
+};
 use crate::application::s3::context::{Context, S3Handler};
 use crate::application::s3::errors::{S3Error, S3ErrorCodeKind, S3HTTPError};
 use crate::application::s3::headers::{self, X_AMZ_STORAGE_CLASS};
@@ -26,6 +28,7 @@ pub struct ObjectPutHandler;
 impl S3Handler for ObjectPutHandler {
     #[inline]
     fn is_match(&self, ctx: &Context) -> bool {
+        // Only support normal put for now, multipart later
         ctx.request.method() == Method::PUT
     }
 
@@ -75,37 +78,41 @@ impl S3Handler for ObjectPutHandler {
 
         let insert_task =
             state.bucket_loader.put_object(request.expect("can't fail"));
-        insert_task.await?;
+        let output = insert_task.await?;
 
         Ok(Response::builder()
             .status(StatusCode::OK)
-            .header(ETAG, "unimplemented")
-            /*
-            .header(headers::X_AMZ_EXPIRATION, unimplemented!(""))
-            .header(headers::X_AMZ_CONTENT_SHA_256, unimplemented!(""))
-            .header(headers::X_AMZ_SERVER_SIDE_ENCRYPTION, unimplemented!(""))
-            .header(headers::X_AMZ_VERSION_ID, unimplemented!(""))
-            .header(
+            .header_opt(ETAG, output.e_tag)
+            .header_opt(headers::X_AMZ_EXPIRATION, output.expiration)
+            .header_opt(headers::X_AMZ_CONTENT_SHA_256, output.checksum)
+            .header_opt(
+                headers::X_AMZ_SERVER_SIDE_ENCRYPTION,
+                output.server_side_encryption,
+            )
+            .header_opt(headers::X_AMZ_VERSION_ID, output.version_id)
+            .header_opt(
                 headers::X_AMZ_SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM,
-                unimplemented!(""),
+                output.sse_customer_algorithm,
             )
-            .header(
+            .header_opt(
                 headers::X_AMZ_SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5,
-                unimplemented!(""),
+                output.sse_customer_key_md5,
             )
-            .header(
+            .header_opt(
                 headers::X_AMZ_SERVER_SIDE_ENCRYPTION_AWS_KMS_KEY_ID,
-                unimplemented!(""),
+                output.ssekms_key_id,
             )
-            .header(
+            .header_opt(
                 headers::X_AMZ_SERVER_SIDE_ENCRYPTION_CONTEXT,
-                unimplemented!(""),
+                output.ssekms_encryption_context,
             )
-            .header(
+            .header_opt(
                 headers::X_AMZ_BUCKET_SERVER_SIDE_ENCRYPTION_BUCKET_KEY_ENABLED,
-                unimplemented!(""),
+                output.bucket_key_enabled.map(|x| match x {
+                    true => "true",
+                    false => "false",
+                }),
             )
-                    */
             .body(Body::empty())
             .unwrap())
     }

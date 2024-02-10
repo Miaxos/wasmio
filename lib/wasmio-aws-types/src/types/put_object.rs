@@ -103,3 +103,43 @@ pub struct PutObjectRequest {
     /// If the bucket is configured as a website, redirects requests for this object to another object in the same bucket or to an external URL. Amazon S3 stores the value of this header in the object metadata. For information about object metadata, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html">Object Key and Metadata</a>. In the following example, the request header sets the redirect to an object (anotherPage.html) in the same bucket:  <code>x-amz-website-redirect-location: /anotherPage.html</code>  In the following example, the request header sets the object redirect to another website:  <code>x-amz-website-redirect-location: http://www.example.com/</code>  For more information about website hosting in Amazon S3, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/WebsiteHosting.html">Hosting Websites on Amazon S3</a> and <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/how-to-page-redirect.html">How to Configure Website Page Redirects</a>.
     pub website_redirect_location: Option<String>,
 }
+
+#[derive(Derivative, Default, Builder)]
+#[derivative(Debug)]
+#[builder(pattern = "owned", setter(into), default)]
+pub struct PutObjectOutput {
+    /// Indicates whether the uploaded object uses an S3 Bucket Key for
+    /// server-side encryption with AWS KMS (SSE-KMS).
+    pub bucket_key_enabled: Option<bool>,
+    /// Entity tag for the uploaded object.
+    pub e_tag: Option<String>,
+    ///  If the expiration is configured for the object (see <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html">PutBucketLifecycleConfiguration</a>), the response includes this header. It includes the expiry-date and rule-id key-value pairs that provide information about object expiration. The value of the rule-id is URL encoded.
+    pub expiration: Option<String>,
+    pub request_charged: Option<String>,
+    /// If server-side encryption with a customer-provided encryption key was
+    /// requested, the response will include this header confirming the
+    /// encryption algorithm used.
+    pub sse_customer_algorithm: Option<String>,
+    /// If server-side encryption with a customer-provided encryption key was
+    /// requested, the response will include this header to provide round-trip
+    /// message integrity verification of the customer-provided encryption key.
+    pub sse_customer_key_md5: Option<String>,
+    /// If present, specifies the AWS KMS Encryption Context to use for object
+    /// encryption. The value of this header is a base64-encoded UTF-8 string
+    /// holding JSON with the encryption context key-value pairs.
+    pub ssekms_encryption_context: Option<String>,
+    /// If `x-amz-server-side-encryption` is present and has the value of
+    /// `aws:kms`, this header specifies the ID of the AWS Key Management
+    /// Service (AWS KMS) symmetric customer managed customer master key (CMK)
+    /// that was used for the object.
+    pub ssekms_key_id: Option<String>,
+    /// If you specified server-side encryption either with an AWS KMS customer
+    /// master key (CMK) or Amazon S3-managed encryption key in your PUT
+    /// request, the response includes this header. It confirms the encryption
+    /// algorithm that Amazon S3 used to encrypt the object.
+    pub server_side_encryption: Option<String>,
+    /// Version of the object.
+    pub version_id: Option<String>,
+    /// TODO
+    pub checksum: Option<String>,
+}

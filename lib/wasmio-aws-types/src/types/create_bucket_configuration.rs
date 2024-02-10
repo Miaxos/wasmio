@@ -1,3 +1,5 @@
+use derivative::Derivative;
+use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -19,4 +21,40 @@ pub struct CreateBucketConfiguration {
     ///
     pub bucket: Option<BucketInfo>,
     */
+}
+
+#[derive(Derivative, Default, Builder)]
+#[derivative(Debug)]
+#[builder(pattern = "owned", setter(into), default)]
+pub struct CreateBucketOutput {
+    /// Specifies the Region where the bucket will be created.
+    pub location: Option<String>,
+}
+
+#[derive(Derivative, Default, Builder)]
+#[derivative(Debug)]
+#[builder(pattern = "owned", setter(into), default)]
+pub struct CreateBucketRequest {
+    /// The canned ACL to apply to the bucket.
+    pub acl: Option<String>,
+    /// The name of the bucket to create.
+    pub bucket: String,
+    /// The configuration information for the bucket.
+    pub create_bucket_configuration: Option<CreateBucketConfiguration>,
+    /// Allows grantee the read, write, read ACP, and write ACP permissions
+    /// on the bucket.
+    pub grant_full_control: Option<String>,
+    /// Allows grantee to list the objects in the bucket.
+    pub grant_read: Option<String>,
+    /// Allows grantee to read the bucket ACL.
+    pub grant_read_acp: Option<String>,
+    /// Allows grantee to create new objects in the bucket. For the
+    /// bucket and object owners of existing objects, also allows deletions and
+    /// overwrites of those objects.
+    pub grant_write: Option<String>,
+    /// Allows grantee to write the ACL for the applicable bucket.
+    pub grant_write_acp: Option<String>,
+    /// Specifies whether you want S3 Object Lock to be enabled for the new
+    /// bucket.
+    pub object_lock_enabled_for_bucket: Option<bool>,
 }
