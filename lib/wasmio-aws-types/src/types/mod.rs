@@ -35,3 +35,9 @@ pub use object::{Object, ObjectBuilder, ObjectBuilderError};
 
 mod owner;
 pub use owner::{Owner, OwnerBuilder, OwnerBuilderError};
+
+mod get_object;
+pub use get_object::{
+    GetObjectOutput, GetObjectOutputBuilder, GetObjectOutputBuilderError,
+    GetObjectRequest, GetObjectRequestBuilder, GetObjectRequestBuilderError,
+};

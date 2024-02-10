@@ -3,15 +3,17 @@ use std::fmt::Debug;
 use crate::infrastructure::storage::{BackendStorage, FSStorage};
 
 pub mod errors;
+use axum::body::{Body, BodyDataStream};
 use errors::BucketStorageError;
 use futures::{StreamExt, TryStreamExt};
-use tokio_util::io::StreamReader;
+use tokio_util::io::{ReaderStream, StreamReader};
 use tracing::{error, warn};
 use wasmio_aws_types::types::{
     CreateBucketOutput, CreateBucketOutputBuilder, CreateBucketRequest,
     DeleteObjectOutput, DeleteObjectOutputBuilder, DeleteObjectRequest,
-    ListObjectsV2Output, ListObjectsV2Request, Object, PutObjectOutput,
-    PutObjectOutputBuilder, PutObjectRequest,
+    GetObjectOutput, GetObjectRequest, ListObjectsV2Output,
+    ListObjectsV2Request, Object, PutObjectOutput, PutObjectOutputBuilder,
+    PutObjectRequest,
 };
 
 pub trait BackendDriver:
@@ -125,5 +127,60 @@ where
             ..Default::default()
         };
         Ok(result)
+    }
+
+    pub async fn get_object(
+        &self,
+        GetObjectRequest { bucket, key, .. }: GetObjectRequest,
+    ) -> Result<GetObjectOutput, BucketStorageError> {
+        let (mut asyncwriter, asyncreader) = tokio::io::duplex(8192);
+
+        let s = self.clone();
+        tokio::spawn(async move {
+            if let Err(err) = s
+                .backend_storage
+                .get_element_in_database(&bucket, &key, &mut asyncwriter)
+                .await
+            {
+                warn!("{err:?}");
+            }
+        });
+
+        let body = Body::from_stream(ReaderStream::new(asyncreader));
+
+        Ok(GetObjectOutput {
+            accept_ranges: None,
+            body: Some(body),
+            bucket_key_enabled: None,
+            cache_control: None,
+            content_disposition: None,
+            content_encoding: None,
+            content_language: None,
+            content_length: None,
+            content_range: None,
+            content_type: None,
+            delete_marker: None,
+            e_tag: None,
+            expiration: None,
+            expires: None,
+            last_modified: None,
+            metadata: None,
+            missing_meta: None,
+            object_lock_legal_hold_status: None,
+            object_lock_mode: None,
+            object_lock_retain_until_date: None,
+            parts_count: None,
+            replication_status: None,
+            request_charged: None,
+            restore: None,
+            sse_customer_algorithm: None,
+            sse_customer_key_md5: None,
+            ssekms_key_id: None,
+            server_side_encryption: None,
+            storage_class: None,
+            tag_count: None,
+            version_id: None,
+            website_redirect_location: None,
+        })
     }
 }

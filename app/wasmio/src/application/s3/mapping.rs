@@ -9,6 +9,7 @@ use super::context::{Context, S3Handler, VisitorNil};
 use super::errors::S3HTTPError;
 use super::handlers::bucket_create::BucketCreateHandler;
 use super::handlers::object_delete::ObjectDeleteHandler;
+use super::handlers::object_get::ObjectGetHandler;
 use super::handlers::object_list_v2::ObjectListHandlerV2;
 use super::handlers::object_put::ObjectPutHandler;
 use super::state::S3State;
@@ -37,7 +38,8 @@ where
             .with(BucketCreateHandler)
             .with(ObjectPutHandler)
             .with(ObjectDeleteHandler)
-            .with(ObjectListHandlerV2);
+            .with(ObjectListHandlerV2)
+            .with(ObjectGetHandler);
 
         let service =
             ServiceBuilder::new().service_fn(move |req: Request<Body>| {
