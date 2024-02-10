@@ -9,7 +9,7 @@ wasmer-extra-flags = "--net --enable-threads --enable-bulk-memory --env CONFIG_F
 
 [[module]]
 name = "wasmio"
-source = "target/wasm32-wasmer-wasi/debug/wasmio.wasi.wasm"
+source = "target/wasm32-wasmer-wasi/release/wasmio.wasm"
 
 [[command]]
 name = "wasmio"

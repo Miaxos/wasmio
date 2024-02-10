@@ -154,8 +154,7 @@ jobs:
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
           bin="target/${{ matrix.target }}/release/wasmio.exe"
         elif [ "${{ matrix.special }}" = "wasi" ]; then
-          ls target/wasm32-wamser-wasi/release/
-          bin="target/wasm32-wamser-wasi/release/wasmio.wasi.wasm"
+          bin="target/wasm32-wasmer-wasi/release/wasmio.wasm"
         else
           bin="target/${{ matrix.target }}/release/wasmio"
         fi
