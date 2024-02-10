@@ -86,7 +86,7 @@ jobs:
         - build: stable-x86
           os: ubuntu-latest
           rust: stable
-          target: wasm32-wamser-wasi
+          target: x86_64-unknown-linux-gnu
           special: wasi
           qemu: i386
 
@@ -153,8 +153,8 @@ jobs:
         ${{ env.CARGO }} build --bin wasmio --verbose --release ${{ env.TARGET_FLAGS }}
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
           bin="target/${{ matrix.target }}/release/wasmio.exe"
-        elif [ "${{ matrix.special }}" = "cross" ]; then
-          bin="target/${{ matrix.target }}/release/wasmio.wasm"
+        elif [ "${{ matrix.special }}" = "wasi" ]; then
+          bin="target/wasm32-wamser-wasi/release/wasmio.wasm"
         else
           bin="target/${{ matrix.target }}/release/wasmio"
         fi
@@ -184,7 +184,7 @@ jobs:
       shell: bash
       run: |
         version="${{ needs.create-release.outputs.version }}"
-        echo "ARCHIVE=roster-${{ matrix.target }}" >> $GITHUB_ENV
+        echo "ARCHIVE=wasmio-${{ matrix.target }}" >> $GITHUB_ENV
 
     - name: Creating directory for archive
       shell: bash
@@ -217,5 +217,5 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       shell: bash
       run: |
-        release_name="v${{ needs.create-release.outputs.version }}"
+        release_name="wasmio-v${{ needs.create-release.outputs.version }}"
         gh release upload "$release_name" ${{ env.ASSET }} ${{ env.ASSET_SUM }}
