@@ -113,7 +113,7 @@ jobs:
         target: ${{ matrix.target }}
 
     - name: Use Cross
-      if: matrix.os == 'ubuntu-latest' && matrix.target != '' && matrix.special != 'wasix'
+      if: matrix.os == 'ubuntu-latest' && matrix.target != '' && matrix.special != 'wasi'
       shell: bash
       run: |
         # In the past, new releases of 'cross' have broken CI. So for now, we
@@ -128,7 +128,7 @@ jobs:
         echo "CARGO=cross" >> $GITHUB_ENV
 
     - name: Use WASIX
-      if: matrix.os == 'ubuntu-latest' && matrix.special == 'wasix'
+      if: matrix.os == 'ubuntu-latest' && matrix.special == 'wasi'
       shell: bash
       run: |
         cargo install cargo-wasix
