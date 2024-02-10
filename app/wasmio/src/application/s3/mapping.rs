@@ -32,15 +32,14 @@ impl<T: BackendDriver> S3Mapping<T> {
 
         let service =
             ServiceBuilder::new().service_fn(move |req: Request<Body>| {
-                let request_id = Ulid::new();
                 let state = self.state.clone();
                 // Create a request context and route it based on this.
                 async move {
-                    let result = handlers
-                        .handle(Context::new(req), state)
-                        .await
-                        .map_err(|err| {
-                            S3HTTPError::custom("", request_id.to_string(), err)
+                    let context = Context::new(req)?;
+                    let r_id = context.request_id();
+                    let result =
+                        handlers.handle(context, state).await.map_err(|err| {
+                            S3HTTPError::custom("", r_id.to_string(), err)
                         });
 
                     result

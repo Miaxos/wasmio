@@ -19,6 +19,10 @@ pub enum S3ErrorCodeKind {
     InvalidBucketName,
     /// An internal error occurred. Try again.
     InternalError,
+    /// Couldn't parse the specified URI.
+    InvalidURI,
+    /// Your key is too long.
+    KeyTooLongError,
     /// This error might occur for the following reasons:
     /// - The request is using the wrong signature version. Use
     ///   AWS4-HMAC-SHA256
@@ -62,6 +66,8 @@ impl S3ErrorCodeKind {
             S3ErrorCodeKind::InvalidBucketName => StatusCode::BAD_REQUEST,
             S3ErrorCodeKind::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             S3ErrorCodeKind::InvalidRequest => StatusCode::BAD_REQUEST,
+            S3ErrorCodeKind::InvalidURI => StatusCode::BAD_REQUEST,
+            S3ErrorCodeKind::KeyTooLongError => StatusCode::BAD_REQUEST,
             S3ErrorCodeKind::MalformedXML => StatusCode::BAD_REQUEST,
         }
     }
@@ -75,6 +81,8 @@ impl S3ErrorCodeKind {
                 "An internal error occurred. Try again."
             }
             S3ErrorCodeKind::InvalidRequest => "Invalid Request",
+            S3ErrorCodeKind::InvalidURI => "Couldn't parse the specified URI.",
+            S3ErrorCodeKind::KeyTooLongError => "Your key is too long",
             S3ErrorCodeKind::MalformedXML => {
                 "The XML that you provided was not well formed or did not \
                  validate against our published schema."

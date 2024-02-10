@@ -1,0 +1,10 @@
+---
+source: app/wasmio/src/application/s3/path.rs
+expression: "S3Path::try_from_path(\"/bucket/dir/object\")"
+---
+Ok(
+    Object {
+        bucket: "bucket",
+        key: "dir/object",
+    },
+)

@@ -58,6 +58,7 @@ tracing-subscriber = { workspace = true, features = ["fmt", "env-filter"] }
 tracing.workspace = true
 
 ulid = "1"
+urlencoding = "2"
 
 [build-dependencies]
 chrono = "0.4.33"

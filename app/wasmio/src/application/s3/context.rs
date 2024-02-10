@@ -2,20 +2,36 @@ use axum::async_trait;
 use axum::body::Body;
 use axum::http::Request;
 use axum::response::Response;
+use ulid::Ulid;
 
 use super::errors::{S3Error, S3ErrorCodeKind, S3HTTPError};
+use super::path::S3Path;
 use super::state::S3State;
 use crate::domain::storage::BackendDriver;
 
 /// Request Context
 #[derive(Debug)]
 pub struct Context {
+    pub request_id: Ulid,
     pub request: Request<Body>,
+    pub path: S3Path,
 }
 
 impl Context {
-    pub fn new(request: Request<Body>) -> Self {
-        Self { request }
+    pub fn new(request: Request<Body>) -> Result<Self, S3HTTPError> {
+        let request_id = Ulid::new();
+
+        let (parts, body) = request.into_parts();
+
+        let path = S3Path::from_part(&request_id, &parts)?;
+
+        let request = Request::from_parts(parts, body);
+
+        Ok(Self {
+            request_id,
+            request,
+            path,
+        })
     }
 
     pub fn bucket_name(&self) -> Option<String> {
@@ -24,6 +40,10 @@ impl Context {
 
     pub fn expect_bucket(&self) -> Result<String, S3Error> {
         Err(S3ErrorCodeKind::InvalidBucketName.into())
+    }
+
+    pub fn request_id(&self) -> Ulid {
+        self.request_id
     }
 }
 

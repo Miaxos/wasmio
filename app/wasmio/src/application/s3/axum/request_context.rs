@@ -71,7 +71,6 @@ impl<S> FromRequestParts<S> for RequestContext
 where
     S: Send + Sync,
 {
-    // If anything goes wrong or no session is found, redirect to the auth page
     type Rejection = RequestContextRejection;
 
     async fn from_request_parts(

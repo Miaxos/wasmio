@@ -1,0 +1,7 @@
+---
+source: app/wasmio/src/application/s3/path.rs
+expression: "S3Path::try_from_path(\"/\")"
+---
+Ok(
+    Root,
+)

@@ -40,7 +40,7 @@ impl<T: BackendDriver> BucketStorage<T> {
         &self,
         CreateBucketRequest { bucket, .. }: CreateBucketRequest,
     ) -> Result<CreateBucketOutput, BucketStorageError> {
-        let _db_info =
+        let db_info =
             self.backend_storage.new_database(&bucket).await.map_err(
                 |err| {
                     warn!("{err:?}");
@@ -49,6 +49,7 @@ impl<T: BackendDriver> BucketStorage<T> {
             )?;
 
         Ok(CreateBucketOutputBuilder::default()
+            .location(format!("/{name}", name = db_info.name()))
             .build()
             .map_err(|_err| BucketStorageError::Unknown)?)
     }

@@ -9,6 +9,9 @@ use tokio::io::{AsyncRead, AsyncWrite};
 mod fs_storage;
 pub use fs_storage::FSStorage;
 
+mod database;
+pub use database::DatabaseInfo;
+
 /// Implement this trait which define the backend storage used to store data
 ///
 /// The storage is very simple for now
@@ -59,14 +62,6 @@ pub trait BackendStorage: Send + Sync {
         db: &str,
         name_elt: &str,
     ) -> anyhow::Result<()>;
-}
-
-/// List of database info available
-#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
-pub struct DatabaseInfo {
-    pub name: String,
-    pub number_element: u64,
-    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, Default)]

@@ -6,4 +6,4 @@ mod context;
 mod errors;
 mod handlers;
 mod headers;
-// mod methods;
+mod path;

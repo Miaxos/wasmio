@@ -1,4 +1,3 @@
-use axum::routing::get;
 use axum::Router;
 
 use super::s3::mapping::S3Mapping;
@@ -19,11 +18,6 @@ impl AppMapping {
 
         Router::new()
             .with_state(self.state)
-            .route("/", get(handler))
             .merge(s3mapping.into_router())
     }
-}
-
-async fn handler() -> &'static str {
-    "hi mom!"
 }
