@@ -21,8 +21,10 @@ use crate::application::s3::context::{Context, S3Handler};
 use crate::application::s3::errors::{S3Error, S3ErrorCodeKind, S3HTTPError};
 use crate::application::s3::headers::{self, X_AMZ_STORAGE_CLASS};
 use crate::application::s3::state::S3State;
+use crate::domain::storage::errors::BucketStorageError;
 use crate::domain::storage::BackendDriver;
 use crate::infrastructure::axum::headers::Headers;
+use crate::infrastructure::storage::BackendStorage;
 
 #[derive(Clone, Copy)]
 pub struct ObjectDeleteHandler;
@@ -46,7 +48,10 @@ impl S3Handler for ObjectDeleteHandler {
         &self,
         ctx: Context,
         state: S3State<T>,
-    ) -> Result<Response, S3Error> {
+    ) -> Result<Response, S3Error>
+    where
+        BucketStorageError: From<<T as BackendStorage>::Error>,
+    {
         let (bucket_name, key) = ctx.expect_object()?;
 
         info!(

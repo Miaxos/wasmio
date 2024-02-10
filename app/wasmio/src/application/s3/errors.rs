@@ -15,6 +15,10 @@ use crate::domain::storage::errors::BucketStorageError;
 #[allow(clippy::upper_case_acronyms)]
 #[non_exhaustive]
 pub enum S3ErrorCodeKind {
+    /// The requested bucket name is not available. The bucket namespace is
+    /// shared by all users of the system. Please select a different name and
+    /// try again.
+    BucketAlreadyExists,
     /// The specified bucket is not valid.
     InvalidBucketName,
     /// An internal error occurred. Try again.
@@ -63,6 +67,7 @@ pub enum S3ErrorCodeKind {
 impl S3ErrorCodeKind {
     const fn status_code(&self) -> StatusCode {
         match self {
+            S3ErrorCodeKind::BucketAlreadyExists => StatusCode::CONFLICT,
             S3ErrorCodeKind::InvalidBucketName => StatusCode::BAD_REQUEST,
             S3ErrorCodeKind::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             S3ErrorCodeKind::InvalidRequest => StatusCode::BAD_REQUEST,
@@ -74,6 +79,11 @@ impl S3ErrorCodeKind {
 
     const fn message(&self) -> &'static str {
         match self {
+            S3ErrorCodeKind::BucketAlreadyExists => {
+                "The requested bucket name is not available. The bucket \
+                 namespace is shared by all users of the system. Please select \
+                 a different name and try again."
+            }
             S3ErrorCodeKind::InvalidBucketName => {
                 "The specified bucket is not valid."
             }
@@ -211,6 +221,9 @@ impl From<BucketStorageError> for S3Error {
         match value {
             BucketStorageError::Unknown => {
                 S3ErrorCodeKind::InternalError.into()
+            }
+            BucketStorageError::DatabaseAlreadyExist => {
+                S3ErrorCodeKind::BucketAlreadyExists.into()
             }
         }
     }

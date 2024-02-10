@@ -29,7 +29,11 @@ pub struct BucketStorage<T: BackendDriver> {
     backend_storage: T,
 }
 
-impl<T: BackendDriver> BucketStorage<T> {
+impl<T> BucketStorage<T>
+where
+    T: BackendDriver,
+    BucketStorageError: From<<T as BackendStorage>::Error>,
+{
     pub fn new(storage: T) -> Self {
         Self {
             backend_storage: storage,
@@ -40,13 +44,7 @@ impl<T: BackendDriver> BucketStorage<T> {
         &self,
         CreateBucketRequest { bucket, .. }: CreateBucketRequest,
     ) -> Result<CreateBucketOutput, BucketStorageError> {
-        let db_info =
-            self.backend_storage.new_database(&bucket).await.map_err(
-                |err| {
-                    warn!("{err:?}");
-                    BucketStorageError::Unknown
-                },
-            )?;
+        let db_info = self.backend_storage.new_database(&bucket).await?;
 
         Ok(CreateBucketOutputBuilder::default()
             .location(format!("/{name}", name = db_info.name()))

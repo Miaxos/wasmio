@@ -14,7 +14,9 @@ use crate::application::s3::axum::RequestExt;
 use crate::application::s3::context::{Context, S3Handler};
 use crate::application::s3::errors::{S3Error, S3ErrorCodeKind};
 use crate::application::s3::state::S3State;
+use crate::domain::storage::errors::BucketStorageError;
 use crate::domain::storage::BackendDriver;
+use crate::infrastructure::storage::BackendStorage;
 
 #[derive(Clone, Copy)]
 pub struct BucketCreateHandler;
@@ -38,7 +40,10 @@ impl S3Handler for BucketCreateHandler {
         &self,
         mut ctx: Context,
         state: S3State<T>,
-    ) -> Result<Response, S3Error> {
+    ) -> Result<Response, S3Error>
+    where
+        BucketStorageError: From<<T as BackendStorage>::Error>,
+    {
         let body = ctx.body();
         let bucket_name = ctx.expect_bucket()?;
 

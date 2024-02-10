@@ -9,7 +9,9 @@ use ulid::Ulid;
 use super::errors::{S3Error, S3ErrorCodeKind, S3HTTPError};
 use super::path::S3Path;
 use super::state::S3State;
+use crate::domain::storage::errors::BucketStorageError;
 use crate::domain::storage::BackendDriver;
+use crate::infrastructure::storage::BackendStorage;
 
 /// Request Context
 #[derive(Debug)]
@@ -105,7 +107,9 @@ pub trait S3Handler {
         &self,
         ctx: Context,
         state: S3State<T>,
-    ) -> Result<Response, S3Error>;
+    ) -> Result<Response, S3Error>
+    where
+        BucketStorageError: From<<T as BackendStorage>::Error>;
 }
 
 #[derive(Clone, Copy)]
@@ -114,7 +118,7 @@ pub struct VisitorNil;
 #[async_trait]
 impl S3Handler for VisitorNil {
     #[inline]
-    fn is_match(&self, ctx: &Context) -> bool {
+    fn is_match(&self, _ctx: &Context) -> bool {
         false
     }
 
@@ -122,7 +126,10 @@ impl S3Handler for VisitorNil {
         &self,
         _ctx: Context,
         _state: S3State<T>,
-    ) -> Result<Response, S3Error> {
+    ) -> Result<Response, S3Error>
+    where
+        BucketStorageError: From<<T as BackendStorage>::Error>,
+    {
         Err(S3Error::invalid_request("This pattern has not been implemented yet, feel free to drop an issue at `https://github.com/miaxos/wasmio`. 💜"))
     }
 }
@@ -162,7 +169,10 @@ impl<A: S3Handler + Send + Sync, B: S3Handler + Send + Sync> S3Handler
         &self,
         ctx: Context,
         state: S3State<T>,
-    ) -> Result<Response, S3Error> {
+    ) -> Result<Response, S3Error>
+    where
+        BucketStorageError: From<<T as BackendStorage>::Error>,
+    {
         if self.0.is_match(&ctx) {
             self.0.handle(ctx, state).await
         } else {

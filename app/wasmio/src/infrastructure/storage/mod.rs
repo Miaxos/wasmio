@@ -7,7 +7,7 @@ use futures::Stream;
 use tokio::io::{AsyncRead, AsyncWrite};
 
 mod fs_storage;
-pub use fs_storage::FSStorage;
+pub use fs_storage::{FSError, FSStorage};
 
 mod database;
 pub use database::DatabaseInfo;
@@ -24,8 +24,13 @@ pub use database::DatabaseInfo;
 ///   metadata.
 #[async_trait]
 pub trait BackendStorage: Send + Sync {
+    type Error: std::error::Error + Send + Sync;
+
     /// To create a new database
-    async fn new_database(&self, name: &str) -> anyhow::Result<DatabaseInfo>;
+    async fn new_database(
+        &self,
+        name: &str,
+    ) -> Result<DatabaseInfo, Self::Error>;
 
     /// To get database metadata, if None, database doesn't exist
     async fn database_metadata(

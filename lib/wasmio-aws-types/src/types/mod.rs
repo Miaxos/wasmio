@@ -17,3 +17,14 @@ pub use delete_object::{
     DeleteObjectOutputBuilderError, DeleteObjectRequest,
     DeleteObjectRequestBuilder, DeleteObjectRequestBuilderError,
 };
+
+mod list_object;
+
+mod common;
+pub use common::{CommonPrefix, CommonPrefixBuilder, CommonPrefixBuilderError};
+
+mod object;
+pub use object::{Object, ObjectBuilder, ObjectBuilderError};
+
+mod owner;
+pub use owner::{Owner, OwnerBuilder, OwnerBuilderError};

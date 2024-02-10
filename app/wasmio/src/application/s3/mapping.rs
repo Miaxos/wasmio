@@ -4,7 +4,6 @@ use axum::http::Request;
 use axum::response::{IntoResponse, Response};
 use axum::Router;
 use tower::ServiceBuilder;
-use ulid::Ulid;
 
 use super::context::{Context, S3Handler, VisitorNil};
 use super::errors::S3HTTPError;
@@ -12,7 +11,9 @@ use super::handlers::bucket_create::BucketCreateHandler;
 use super::handlers::object_delete::ObjectDeleteHandler;
 use super::handlers::object_put::ObjectPutHandler;
 use super::state::S3State;
+use crate::domain::storage::errors::BucketStorageError;
 use crate::domain::storage::BackendDriver;
+use crate::infrastructure::storage::BackendStorage;
 
 pub struct S3Mapping<T: BackendDriver> {
     state: S3State<T>,
@@ -22,7 +23,10 @@ async fn handle_error(err: S3HTTPError) -> Response {
     err.into_response()
 }
 
-impl<T: BackendDriver> S3Mapping<T> {
+impl<T: BackendDriver> S3Mapping<T>
+where
+    BucketStorageError: From<<T as BackendStorage>::Error>,
+{
     pub fn new(state: S3State<T>) -> Self {
         Self { state }
     }

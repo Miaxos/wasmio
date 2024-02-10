@@ -24,9 +24,24 @@ impl FSStorage {
     }
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum FSError {
+    #[error("Database already exist")]
+    AlreadyExist,
+    #[error("fallback io: {0}")]
+    OtherIO(#[from] std::io::Error),
+    #[error("fallback serde: {0}")]
+    Serde(#[from] serde_json::Error),
+}
+
 #[async_trait]
 impl BackendStorage for FSStorage {
-    async fn new_database(&self, name: &str) -> anyhow::Result<DatabaseInfo> {
+    type Error = FSError;
+
+    async fn new_database(
+        &self,
+        name: &str,
+    ) -> Result<DatabaseInfo, Self::Error> {
         let db_info = DatabaseInfo {
             name: name.to_string(),
             number_element: 0,
@@ -38,9 +53,20 @@ impl BackendStorage for FSStorage {
         );
         let write_dir = tokio::fs::create_dir(self.base_path.join(name));
 
-        let (a, b) = join(write_metadata, write_dir).await;
-        a?;
-        b?;
+        let (write_metadata_task, write_dir_task) =
+            join(write_metadata, write_dir).await;
+
+        match (write_metadata_task, write_dir_task) {
+            (Ok(_), Ok(_)) => {}
+            (Err(e), _) | (_, Err(e)) => {
+                return Err(match e.kind() {
+                    tokio::io::ErrorKind::AlreadyExists => {
+                        Self::Error::AlreadyExist
+                    }
+                    _ => Self::Error::OtherIO(e),
+                });
+            }
+        };
 
         Ok(db_info)
     }
