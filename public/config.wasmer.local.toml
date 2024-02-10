@@ -2,4 +2,4 @@
 bind_addr = "0.0.0.0:8000"
 
 [storage]
-path = "./public/data/"
+path = "/public/data/"

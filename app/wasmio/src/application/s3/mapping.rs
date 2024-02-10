@@ -1,14 +1,24 @@
-use axum::routing::{delete, put};
+use axum::body::Body;
+use axum::error_handling::HandleError;
+use axum::http::Request;
+use axum::response::{IntoResponse, Response};
 use axum::Router;
+use tower::ServiceBuilder;
+use ulid::Ulid;
 
-use super::methods::bucket_create::bucket_create_handle;
-use super::methods::object_delete::object_delete_handle;
-use super::methods::object_put::object_put_handle;
+use super::context::{Context, S3Handler, VisitorNil};
+use super::errors::S3HTTPError;
+use super::handlers::bucket_create::BucketCreateHandler;
+use super::handlers::object_put::ObjectPutHandler;
 use super::state::S3State;
 use crate::domain::storage::BackendDriver;
 
 pub struct S3Mapping<T: BackendDriver> {
     state: S3State<T>,
+}
+
+async fn handle_error(err: S3HTTPError) -> Response {
+    err.into_response()
 }
 
 impl<T: BackendDriver> S3Mapping<T> {
@@ -17,10 +27,27 @@ impl<T: BackendDriver> S3Mapping<T> {
     }
 
     pub fn into_router(self) -> Router {
-        Router::new()
-            .route("/", put(bucket_create_handle))
-            .route("/:key", put(object_put_handle))
-            .route("/:key", delete(object_delete_handle))
-            .with_state(self.state)
+        let handlers =
+            VisitorNil.with(BucketCreateHandler).with(ObjectPutHandler);
+
+        let service =
+            ServiceBuilder::new().service_fn(move |req: Request<Body>| {
+                let request_id = Ulid::new();
+                let state = self.state.clone();
+                // Create a request context and route it based on this.
+                async move {
+                    let result = handlers
+                        .handle(Context::new(req), state)
+                        .await
+                        .map_err(|err| {
+                            S3HTTPError::custom("", request_id.to_string(), err)
+                        });
+
+                    result
+                }
+            });
+
+        let handle = HandleError::new(service, handle_error);
+        Router::new().fallback_service(handle)
     }
 }

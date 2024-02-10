@@ -16,8 +16,12 @@ pub fn header_string_opt<K: AsHeaderName>(
 pub fn header_parse<K: AsHeaderName, T: FromStr>(
     key: K,
     map: &HeaderMap,
-) -> Option<T> {
-    header_string_opt(key, map).and_then(|x| x.parse::<T>().ok())
+) -> Result<Option<T>, T::Err> {
+    if let Some(s) = header_string_opt(key, map) {
+        s.parse::<T>().map(Some)
+    } else {
+        Ok(None)
+    }
 }
 
 pub fn header_parse_bool<K: AsHeaderName>(

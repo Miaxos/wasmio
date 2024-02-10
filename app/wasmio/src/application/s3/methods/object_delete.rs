@@ -1,4 +1,6 @@
+use axum::body::Body;
 use axum::extract::{Request, State};
+use axum::http::StatusCode;
 use axum::response::Response;
 use tracing::{info, warn};
 use wasmio_aws_types::types::DeleteObjectRequestBuilder;
@@ -54,6 +56,13 @@ pub async fn object_delete_handle<T: BackendDriver>(
         .delete_object(request.expect("can't fail"));
     insert_task.await.map_err(|x| req.to_error_code(x))?;
 
-    todo!()
-    // todo
+    Ok(Response::builder()
+        .status(StatusCode::NO_CONTENT)
+        /*
+        .header(headers::X_AMZ_DELETE_MARKER, unimplemented!(""))
+        .header(headers::X_AMZ_VERSION_ID, unimplemented!(""))
+        .header(headers::X_AMZ_REQUEST_CHARGED, unimplemented!(""))
+            */
+        .body(Body::empty())
+        .unwrap())
 }

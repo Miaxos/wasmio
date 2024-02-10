@@ -38,6 +38,14 @@ export WASMER_DIR="/Users/wizard/.wasmer"
 
 To run the solution locally, you can use this:
 
+### Standard
+
+```bash
+RUST_LOG=info CONFIG_FILE_LOCATION=./public/config.local.toml cargo run --package wasmio RUST_LOG=info
+```
+
+### Wasmer
+
 ```bash
 cargo wasix build --package wasmio
 wasmer run . \
