@@ -29,6 +29,8 @@ dotenv = "0.15"
 futures.workspace = true
 headers = "0.4"
 
+if_chain = "1.0.2"
+
 quick-xml = { version = "0.31", features = ["serialize"] }
 serde = { workspace = true, features = ["derive"] }
 wasmio-aws-types.workspace = true

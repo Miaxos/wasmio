@@ -9,8 +9,8 @@ use tokio_util::io::StreamReader;
 use tracing::{error, warn};
 use wasmio_aws_types::types::{
     CreateBucketOutput, CreateBucketOutputBuilder, CreateBucketRequest,
-    DeleteObjectRequest, PutObjectOutput, PutObjectOutputBuilder,
-    PutObjectRequest,
+    DeleteObjectOutput, DeleteObjectOutputBuilder, DeleteObjectRequest,
+    PutObjectOutput, PutObjectOutputBuilder, PutObjectRequest,
 };
 
 pub trait BackendDriver:
@@ -82,7 +82,7 @@ impl<T: BackendDriver> BucketStorage<T> {
     pub async fn delete_object(
         &self,
         DeleteObjectRequest { bucket, key, .. }: DeleteObjectRequest,
-    ) -> Result<(), BucketStorageError> {
+    ) -> Result<DeleteObjectOutput, BucketStorageError> {
         self.backend_storage
             .delete_element_in_database(&bucket, &key)
             .await
@@ -91,6 +91,8 @@ impl<T: BackendDriver> BucketStorage<T> {
                 BucketStorageError::Unknown
             })?;
 
-        Ok(())
+        Ok(DeleteObjectOutputBuilder::default()
+            .build()
+            .map_err(|_err| BucketStorageError::Unknown)?)
     }
 }

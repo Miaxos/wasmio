@@ -25,3 +25,16 @@ pub struct DeleteObjectRequest {
     /// VersionId used to reference a specific version of the object.
     pub version_id: Option<String>,
 }
+
+#[derive(Derivative, Default, Builder)]
+#[derivative(Debug)]
+#[builder(pattern = "owned", setter(into), default)]
+pub struct DeleteObjectOutput {
+    /// Specifies whether the versioned object that was permanently deleted was
+    /// (true) or was not (false) a delete marker.
+    pub delete_marker: Option<bool>,
+    pub request_charged: Option<String>,
+    /// Returns the version ID of the delete marker created as a result of the
+    /// DELETE operation.
+    pub version_id: Option<String>,
+}

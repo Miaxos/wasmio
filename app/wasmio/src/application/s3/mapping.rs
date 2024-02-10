@@ -9,6 +9,7 @@ use ulid::Ulid;
 use super::context::{Context, S3Handler, VisitorNil};
 use super::errors::S3HTTPError;
 use super::handlers::bucket_create::BucketCreateHandler;
+use super::handlers::object_delete::ObjectDeleteHandler;
 use super::handlers::object_put::ObjectPutHandler;
 use super::state::S3State;
 use crate::domain::storage::BackendDriver;
@@ -27,8 +28,10 @@ impl<T: BackendDriver> S3Mapping<T> {
     }
 
     pub fn into_router(self) -> Router {
-        let handlers =
-            VisitorNil.with(BucketCreateHandler).with(ObjectPutHandler);
+        let handlers = VisitorNil
+            .with(BucketCreateHandler)
+            .with(ObjectPutHandler)
+            .with(ObjectDeleteHandler);
 
         let service =
             ServiceBuilder::new().service_fn(move |req: Request<Body>| {

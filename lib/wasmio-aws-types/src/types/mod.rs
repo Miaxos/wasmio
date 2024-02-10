@@ -13,6 +13,7 @@ pub use put_object::{
 
 mod delete_object;
 pub use delete_object::{
-    DeleteObjectRequest, DeleteObjectRequestBuilder,
-    DeleteObjectRequestBuilderError,
+    DeleteObjectOutput, DeleteObjectOutputBuilder,
+    DeleteObjectOutputBuilderError, DeleteObjectRequest,
+    DeleteObjectRequestBuilder, DeleteObjectRequestBuilderError,
 };

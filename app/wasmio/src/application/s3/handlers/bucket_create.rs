@@ -4,6 +4,7 @@ use axum::extract::FromRequest;
 use axum::http::{header, Method, Request, StatusCode};
 use axum::response::Response;
 use axum_serde::xml::Xml;
+use if_chain::if_chain;
 use tracing::{error, info};
 use wasmio_aws_types::types::{
     CreateBucketConfiguration, CreateBucketRequestBuilder,
@@ -22,7 +23,15 @@ pub struct BucketCreateHandler;
 impl S3Handler for BucketCreateHandler {
     #[inline]
     fn is_match(&self, ctx: &Context) -> bool {
-        ctx.method() == Method::PUT
+        if_chain! {
+            if ctx.method() == Method::PUT;
+            if ctx.expect_bucket().is_ok();
+            then {
+                true
+            } else {
+                false
+            }
+        }
     }
 
     async fn handle<T: BackendDriver>(

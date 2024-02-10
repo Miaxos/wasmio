@@ -165,8 +165,6 @@ impl S3HTTPError {
     }
 }
 
-// ----------------------------------------------------------------------------
-
 #[derive(Serialize, Deserialize)]
 pub struct Error {
     pub code: String,
@@ -207,8 +205,6 @@ impl IntoResponse for S3HTTPError {
             .unwrap()
     }
 }
-
-// ----------------------------------------------------------------------------
 
 impl From<BucketStorageError> for S3Error {
     fn from(value: BucketStorageError) -> Self {

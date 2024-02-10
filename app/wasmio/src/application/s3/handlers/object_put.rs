@@ -7,6 +7,7 @@ use axum::http::header::{
 };
 use axum::http::{Method, StatusCode};
 use axum::response::Response;
+use if_chain::if_chain;
 use tracing::{error, info, warn};
 use wasmio_aws_types::types::PutObjectRequestBuilder;
 
@@ -29,7 +30,15 @@ impl S3Handler for ObjectPutHandler {
     #[inline]
     fn is_match(&self, ctx: &Context) -> bool {
         // Only support normal put for now, multipart later
-        ctx.method() == Method::PUT
+        if_chain! {
+            if ctx.method() == Method::PUT;
+            if ctx.expect_object().is_ok();
+            then {
+                true
+            } else {
+                false
+            }
+        }
     }
 
     async fn handle<T: BackendDriver>(
@@ -66,7 +75,7 @@ impl S3Handler for ObjectPutHandler {
             .content_encoding(header_string_opt(CONTENT_ENCODING, &map))
             .content_disposition(header_string_opt(CONTENT_DISPOSITION, &map))
             .storage_class(header_string_opt(X_AMZ_STORAGE_CLASS, &map))
-            // .key(key)
+            .key(key)
             .build();
 
         if let Err(err) = request {
