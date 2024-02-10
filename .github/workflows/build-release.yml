@@ -161,12 +161,12 @@ jobs:
         echo "BIN=$bin" >> $GITHUB_ENV
 
     - name: Strip release binary (macos)
-      if: matrix.os == 'macos-latest'
+      if: matrix.os == 'macos-latest' && matrix.special != 'wasi'
       shell: bash
       run: strip "$BIN"
 
     - name: Strip release binary (cross)
-      if: env.CARGO == 'cross' && matrix.strip != ''
+      if: env.CARGO == 'cross' && matrix.strip != '' && matrix.special != 'wasi'
       shell: bash
       run: |
         docker run --rm -v \
@@ -176,7 +176,7 @@ jobs:
           "/target/${{ matrix.target }}/release/wasmio"
 
     - name: Strip release binary (native strip)
-      if: matrix.os != 'macos-latest' && matrix.strip == ''
+      if: matrix.os != 'macos-latest' && matrix.strip == '' && matrix.special != 'wasi'
       shell: bash
       run: strip "$BIN"
 
