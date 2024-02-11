@@ -1,3 +1,5 @@
+use tracing::warn;
+
 use crate::infrastructure::storage::FSError;
 
 #[derive(Clone, Debug, thiserror::Error)]
@@ -14,6 +16,7 @@ pub enum BucketStorageError {
 
 impl From<FSError> for BucketStorageError {
     fn from(value: FSError) -> Self {
+        warn!("{value:?}");
         match value {
             FSError::AlreadyExist => Self::DatabaseAlreadyExist,
             FSError::NoDatabase => Self::NoBucket,
