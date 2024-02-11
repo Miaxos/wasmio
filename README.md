@@ -66,9 +66,6 @@ To have better performance, the storage layer should be reworked to better use
 Files APIs (with Seek for instance, a better format to store data, we don't need
 JSON).
 
-- [ ] Deploy
-- [ ] e2e tests
-
 ## Benchmarks
 
 (Integrate bencher here.)
