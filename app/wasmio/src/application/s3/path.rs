@@ -1,8 +1,6 @@
 //! Part of it was taken from `s3-server` crate.
 use std::net::IpAddr;
 
-use axum::async_trait;
-use axum::extract::{FromRequestParts, Path};
 use axum::http::request::Parts;
 use ulid::Ulid;
 

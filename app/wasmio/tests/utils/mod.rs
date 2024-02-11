@@ -19,7 +19,7 @@ pub async fn start_simple_server() -> anyhow::Result<String> {
     if CACHE.initialized() {
         Ok(CACHE.get().cloned().unwrap())
     } else {
-        let result = if e2e != "" {
+        let result = if !e2e.is_empty() {
             Ok::<_, anyhow::Error>(e2e)
         } else {
             let addr = SocketAddr::new(
@@ -29,7 +29,7 @@ pub async fn start_simple_server() -> anyhow::Result<String> {
             let path = tempdir().unwrap().path().into();
             std::fs::create_dir_all(&path);
             let cfg = Cfg {
-                bind_addr: addr.clone(),
+                bind_addr: addr,
                 storage: StorageConfig { path },
             };
             tokio::spawn(async move { launch_wasmio(cfg).await });

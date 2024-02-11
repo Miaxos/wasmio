@@ -1,30 +1,19 @@
 use axum::async_trait;
-use axum::body::{Body, BodyDataStream};
-use axum::extract::{FromRequestParts, Query, Request, State};
-use axum::http::header::{
-    self, CACHE_CONTROL, CONTENT_DISPOSITION, CONTENT_ENCODING,
-    CONTENT_LANGUAGE, CONTENT_LENGTH, CONTENT_TYPE, ETAG,
-};
+use axum::extract::Query;
+use axum::http::header::{self};
 use axum::http::{HeaderName, HeaderValue, Method, StatusCode};
 use axum::response::Response;
 use if_chain::if_chain;
 use tracing::{error, info, warn};
-use wasmio_aws_types::types::{
-    GetObjectOutput, GetObjectRequest, ListObjectsV2Output,
-    ListObjectsV2Request, PutObjectRequestBuilder,
-};
+use wasmio_aws_types::types::{GetObjectOutput, GetObjectRequest};
 
-use crate::application::s3::axum::request_context::RequestContext;
-use crate::application::s3::axum::{
-    header_parse, header_string_opt, RequestExt,
-};
+use crate::application::s3::axum::{header_string_opt, RequestExt};
 use crate::application::s3::context::{Context, S3Handler};
-use crate::application::s3::errors::{S3Error, S3ErrorCodeKind, S3HTTPError};
-use crate::application::s3::headers::{self, X_AMZ_STORAGE_CLASS};
+use crate::application::s3::errors::S3Error;
+use crate::application::s3::headers::{self};
 use crate::application::s3::state::S3State;
 use crate::domain::storage::errors::BucketStorageError;
 use crate::domain::storage::BackendDriver;
-use crate::infrastructure::axum::headers::Headers;
 use crate::infrastructure::storage::BackendStorage;
 
 #[derive(Clone, Copy)]

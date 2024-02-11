@@ -49,12 +49,10 @@ where
                     let context = Context::new(req)?;
                     let r_id = context.request_id();
                     let resource = context.resource();
-                    let result =
-                        handlers.handle(context, state).await.map_err(|err| {
-                            S3HTTPError::custom(resource, r_id.to_string(), err)
-                        });
 
-                    result
+                    handlers.handle(context, state).await.map_err(|err| {
+                        S3HTTPError::custom(resource, r_id.to_string(), err)
+                    })
                 }
             });
 

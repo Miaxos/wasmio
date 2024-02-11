@@ -1,12 +1,12 @@
 use axum::async_trait;
 use axum::body::Body;
 use axum::http::request::Parts;
-use axum::http::{Method, Request, StatusCode};
+use axum::http::{Method, Request};
 use axum::response::Response;
 use tracing::error;
 use ulid::Ulid;
 
-use super::errors::{S3Error, S3ErrorCodeKind, S3HTTPError};
+use super::errors::{S3Error, S3HTTPError};
 use super::path::S3Path;
 use super::state::S3State;
 use crate::domain::storage::errors::BucketStorageError;

@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use crate::infrastructure::storage::{BackendStorage, ElementInfo, FSStorage};
 
 pub mod errors;
-use axum::body::{Body, BodyDataStream};
+use axum::body::Body;
 use errors::BucketStorageError;
 use futures::{StreamExt, TryStreamExt};
 use tokio_util::io::{ReaderStream, StreamReader};
@@ -49,10 +49,10 @@ where
     ) -> Result<CreateBucketOutput, BucketStorageError> {
         let db_info = self.backend_storage.new_database(&bucket).await?;
 
-        Ok(CreateBucketOutputBuilder::default()
+        CreateBucketOutputBuilder::default()
             .location(format!("/{name}", name = db_info.name()))
             .build()
-            .map_err(|_err| BucketStorageError::Unknown)?)
+            .map_err(|_err| BucketStorageError::Unknown)
     }
 
     pub async fn put_object(
@@ -79,10 +79,10 @@ where
             )
             .await?;
 
-        Ok(PutObjectOutputBuilder::default()
+        PutObjectOutputBuilder::default()
             .e_tag(Some("unimplemented".to_string()))
             .build()
-            .map_err(|_err| BucketStorageError::Unknown)?)
+            .map_err(|_err| BucketStorageError::Unknown)
     }
 
     pub async fn delete_object(
@@ -97,9 +97,9 @@ where
                 BucketStorageError::Unknown
             })?;
 
-        Ok(DeleteObjectOutputBuilder::default()
+        DeleteObjectOutputBuilder::default()
             .build()
-            .map_err(|_err| BucketStorageError::Unknown)?)
+            .map_err(|_err| BucketStorageError::Unknown)
     }
 
     pub async fn list_object_v2(
