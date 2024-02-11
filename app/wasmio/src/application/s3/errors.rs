@@ -62,6 +62,10 @@ pub enum S3ErrorCodeKind {
     /// is, \"The XML you provided was not well-formed or did not validate
     /// against our published schema.\"
     MalformedXML,
+    /// The specified bucket does not exist.
+    NoSuchBucket,
+    /// The specified key does not exist.
+    NoSuchKey,
 }
 
 impl S3ErrorCodeKind {
@@ -74,6 +78,8 @@ impl S3ErrorCodeKind {
             S3ErrorCodeKind::InvalidURI => StatusCode::BAD_REQUEST,
             S3ErrorCodeKind::KeyTooLongError => StatusCode::BAD_REQUEST,
             S3ErrorCodeKind::MalformedXML => StatusCode::BAD_REQUEST,
+            S3ErrorCodeKind::NoSuchBucket => StatusCode::NOT_FOUND,
+            S3ErrorCodeKind::NoSuchKey => StatusCode::NOT_FOUND,
         }
     }
 
@@ -97,6 +103,10 @@ impl S3ErrorCodeKind {
                 "The XML that you provided was not well formed or did not \
                  validate against our published schema."
             }
+            S3ErrorCodeKind::NoSuchBucket => {
+                "The specified bucket does not exist."
+            }
+            S3ErrorCodeKind::NoSuchKey => "The specified key does not exist.",
         }
     }
 }
@@ -225,6 +235,10 @@ impl From<BucketStorageError> for S3Error {
             BucketStorageError::DatabaseAlreadyExist => {
                 S3ErrorCodeKind::BucketAlreadyExists.into()
             }
+            BucketStorageError::NoBucket => {
+                S3ErrorCodeKind::NoSuchBucket.into()
+            }
+            BucketStorageError::NoKey => S3ErrorCodeKind::NoSuchKey.into(),
         }
     }
 }

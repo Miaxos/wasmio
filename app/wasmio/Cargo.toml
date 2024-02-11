@@ -27,7 +27,9 @@ config.workspace = true
 chrono = { version = "0.4", features = ["serde"] }
 dotenv = "0.15"
 futures.workspace = true
+
 headers = "0.4"
+libc.workspace = true
 
 if_chain = "1.0.2"
 

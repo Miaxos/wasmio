@@ -1,3 +1,13 @@
 kind: wasmer.io/App.v0
 name: miaxos-wasmio
-package: miaxos/wasmio@0.0.1
+package: miaxos/wasmio@0.0.6
+debug: true
+
+env:
+  CONFIG_FILE_LOCATION: /public/config.local.toml
+  RUST_LOG: info
+
+volumes: 
+  - name: public 
+    mounts: 
+      - mount_path: /public

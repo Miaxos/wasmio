@@ -9,6 +9,13 @@ pub struct DatabaseInfo {
 }
 
 impl DatabaseInfo {
+    pub fn new_database(name: String) -> Self {
+        Self {
+            name,
+            number_element: 0,
+            created_at: Utc::now(),
+        }
+    }
     pub fn name(&self) -> &str {
         &self.name
     }

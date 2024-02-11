@@ -18,8 +18,6 @@ use tracing::info;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let config = Cfg::from_env()?;
-
     println!(
         r###"
  ▄     ▄ ▄▄▄▄▄▄ ▄▄▄▄▄▄▄ ▄▄   ▄▄ ▄▄▄ ▄▄▄▄▄▄▄ 
@@ -29,6 +27,13 @@ async fn main() -> anyhow::Result<()> {
 █       █      █▄▄▄▄▄  █       █   █  █▄█  █
 █   ▄   █  ▄   █▄▄▄▄▄█ █ ██▄██ █   █       █
 █▄▄█ █▄▄█▄█ █▄▄█▄▄▄▄▄▄▄█▄█   █▄█▄▄▄█▄▄▄▄▄▄▄█
+"###
+    );
+
+    let config = Cfg::hack()?;
+
+    println!(
+        r###"
 
 Version: {version}
 port: {port}

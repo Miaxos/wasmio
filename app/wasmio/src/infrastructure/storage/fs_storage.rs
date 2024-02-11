@@ -1,5 +1,7 @@
 #![allow(dead_code)]
+use std::collections::HashMap;
 use std::io::ErrorKind;
+use std::os::fd::AsRawFd;
 use std::path::PathBuf;
 use std::pin::Pin;
 
@@ -8,12 +10,31 @@ use base64ct::{Base64, Encoding};
 use chrono::Utc;
 use futures::future::join;
 use futures::{Stream, TryStreamExt};
+use libc::c_int;
 use sha2::{Digest, Sha256};
+use tokio::fs::File;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tracing::warn;
 
 use super::{BackendStorage, DatabaseInfo, ElementInfo};
 
+pub const LOCK_EX: c_int = 2;
+pub const LOCK_UN: c_int = 8;
+extern "C" {
+    fn flock(fd: c_int, operation: c_int) -> c_int;
+}
+
+/// We have a FSStorage implemented which aims to store files inside the FS.
+///
+/// A database is composed of multiple files:
+///   - A Folder where every elements are going to be inside
+///   - A `.meta` which will give us a fast path to retrieve data on a database
+///
+/// An element is compose of multiples files:
+///   - Files representing the content, splitted into multiple parts (right now
+///     no multipart, so no
+///   splitting).
+///   - A `.meta` which contain the Info about the element, (meadatas)
 #[derive(Debug, Clone)]
 pub struct FSStorage {
     base_path: PathBuf,
@@ -23,6 +44,105 @@ impl FSStorage {
     pub fn new(base: PathBuf) -> Self {
         Self { base_path: base }
     }
+
+    pub fn database_path(&self, db_name: &str) -> PathBuf {
+        self.base_path.join(db_name)
+    }
+
+    pub fn database_path_meta(&self, db_name: &str) -> PathBuf {
+        self.base_path.join(format!("{name}.meta", name = db_name))
+    }
+
+    pub fn database_path_lock(&self, db_name: &str) -> PathBuf {
+        self.base_path.join(format!("{name}.lock", name = db_name))
+    }
+
+    // For now it's only one part, but later it could grow with versions too
+    pub fn file_path(&self, db_name: &str, file_name: &str) -> PathBuf {
+        self.base_path
+            .join(db_name)
+            .join(format!("{file_name}.part"))
+    }
+
+    pub fn file_path_lock(&self, db_name: &str, file_name: &str) -> PathBuf {
+        self.base_path
+            .join(db_name)
+            .join(format!("{file_name}.lock"))
+    }
+
+    pub fn file_meta(&self, db_name: &str, file_name: &str) -> PathBuf {
+        self.base_path
+            .join(db_name)
+            .join(format!("{file_name}.meta"))
+    }
+
+    pub async fn update_database(
+        &self,
+        db: DatabaseInfo,
+    ) -> Result<(), <Self as BackendStorage>::Error> {
+        tokio::fs::write(
+            self.database_path_meta(db.name()),
+            serde_json::to_string(&db)?,
+        )
+        .await?;
+        Ok(())
+    }
+
+    pub async fn lock_for_write_db(
+        &self,
+        db: &str,
+    ) -> Result<LockGuard, <Self as BackendStorage>::Error> {
+        let path = self.database_path_lock(db);
+        let file = tokio::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(&path)
+            .await?;
+        unsafe { flock(file.as_raw_fd(), LOCK_EX) };
+        Ok(LockGuard { file })
+    }
+
+    pub async fn lock_for_element(
+        &self,
+        db: &str,
+        elt: &str,
+    ) -> Result<LockGuard, <Self as BackendStorage>::Error> {
+        let path = self.file_path_lock(db, elt);
+        let file = tokio::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(&path)
+            .await?;
+        unsafe { flock(file.as_raw_fd(), LOCK_EX) };
+        Ok(LockGuard { file })
+    }
+
+    pub async fn load_file_metadata(
+        &self,
+        db_name: &str,
+        file_name: &str,
+    ) -> Result<Option<ElementInfo>, <Self as BackendStorage>::Error> {
+        let metadata_path = self.file_meta(db_name, file_name);
+
+        if (tokio::fs::metadata(&metadata_path).await).is_err() {
+            return Ok(None);
+        }
+
+        let content = tokio::fs::read_to_string(metadata_path).await?;
+        let data_info = serde_json::from_str(&content)?;
+
+        Ok(Some(data_info))
+    }
+}
+
+pub struct LockGuard {
+    file: File,
+}
+
+impl Drop for LockGuard {
+    fn drop(&mut self) {
+        unsafe { flock(self.file.as_raw_fd(), LOCK_UN) };
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -30,10 +150,14 @@ pub enum FSError {
     // It's depending on the context in fact, will need to modify this
     #[error("Database already exist")]
     AlreadyExist,
+    #[error("No database")]
+    NoDatabase,
     #[error("fallback serde: {0}")]
     Serde(#[from] serde_json::Error),
     #[error("IO: {0}")]
     Other(std::io::Error),
+    #[error("weird one, to investigate")]
+    Weird,
 }
 
 impl From<std::io::Error> for FSError {
@@ -53,16 +177,14 @@ impl BackendStorage for FSStorage {
         &self,
         name: &str,
     ) -> Result<DatabaseInfo, Self::Error> {
-        let db_info = DatabaseInfo {
-            name: name.to_string(),
-            number_element: 0,
-            created_at: Utc::now(),
-        };
+        let new_db = DatabaseInfo::new_database(name.to_string());
+
         let write_metadata = tokio::fs::write(
-            self.base_path.join(format!("{name}.meta")),
-            serde_json::to_string(&db_info)?,
+            self.database_path_meta(new_db.name()),
+            serde_json::to_string(&new_db)?,
         );
-        let write_dir = tokio::fs::create_dir(self.base_path.join(name));
+        let write_dir =
+            tokio::fs::create_dir(self.database_path(new_db.name()));
 
         let (write_metadata_task, write_dir_task) =
             join(write_metadata, write_dir).await;
@@ -70,20 +192,22 @@ impl BackendStorage for FSStorage {
         write_metadata_task?;
         write_dir_task?;
 
-        Ok(db_info)
+        Ok(new_db)
     }
 
     async fn database_metadata(
         &self,
         name: &str,
     ) -> Result<Option<DatabaseInfo>, Self::Error> {
-        let ressource_path = self.base_path.join(format!("{name}.meta"));
+        let ressource_path = self.database_path_meta(name);
 
+        // We check the database exits
         if let Err(err) = tokio::fs::metadata(&ressource_path).await {
             warn!("{err:?}");
             return Ok(None);
         }
 
+        // We load the DatabaseInfo
         let content = tokio::fs::read_to_string(ressource_path).await?;
 
         let data_info = serde_json::from_str(&content)?;
@@ -94,12 +218,19 @@ impl BackendStorage for FSStorage {
         &self,
         db: &str,
         name_elt: &str,
+        metadatas: HashMap<String, String>,
         content: &mut R,
     ) -> Result<ElementInfo, Self::Error> {
         let now = Utc::now();
+        let _lock = self.lock_for_element(db, name_elt).await?;
 
-        let ressource_path =
-            self.base_path.join(db).join(format!("{name_elt}.0.part.0"));
+        if self.database_metadata(db).await?.is_none() {
+            return Err(FSError::NoDatabase);
+        }
+
+        let ressource_path = self.file_path(db, name_elt);
+        let metadata_path = self.file_meta(db, name_elt);
+
         let mut file_content = tokio::fs::File::create(ressource_path).await?;
 
         // TODO: test based on `cat public/data/test-bucket/test.txt.0.part.0 |
@@ -115,19 +246,48 @@ impl BackendStorage for FSStorage {
         let size = tokio::io::copy(&mut ar, &mut file_content).await?;
         let hash = Base64::encode_string(&hasher.finalize());
 
-        let metadata_path =
-            self.base_path.join(db).join(format!("{name_elt}.0.meta"));
+        let elt = self.load_file_metadata(db, name_elt).await?;
         let elt = ElementInfo {
             name: name_elt.to_string(),
             size,
-            created_at: now,
+            created_at: elt.map(|x| x.created_at).unwrap_or(now),
+            last_modified: now,
             checksum: hash,
+            metadatas,
         };
-
         tokio::fs::write(metadata_path, serde_json::to_string(&elt)?).await?;
 
-        // TODO: Increasing the count
+        if let Some(DatabaseInfo {
+            name,
+            number_element,
+            created_at,
+        }) = self.database_metadata(db).await?
+        {
+            self.update_database(DatabaseInfo {
+                name,
+                number_element: number_element + 1,
+                created_at,
+            })
+            .await?;
+        }
         Ok(elt)
+    }
+
+    async fn get_element_metadata_in_database(
+        &self,
+        db: &str,
+        key: &str,
+    ) -> Result<Option<ElementInfo>, Self::Error> {
+        let ressource_path = self.file_meta(db, key);
+
+        if let Err(err) = tokio::fs::metadata(&ressource_path).await {
+            warn!("{err:?}");
+            return Ok(None);
+        }
+
+        let content = tokio::fs::read_to_string(ressource_path).await?;
+        let data_info = serde_json::from_str(&content)?;
+        Ok(Some(data_info))
     }
 
     async fn get_element_in_database<T: AsyncWrite + Send + Unpin>(
@@ -135,13 +295,14 @@ impl BackendStorage for FSStorage {
         db: &str,
         key: &str,
         mut writer: &mut T,
-    ) -> anyhow::Result<u64> {
-        let ressource_path =
-            self.base_path.join(db).join(format!("{key}.0.part.0"));
+    ) -> Result<u64, Self::Error> {
+        let ressource_path = self.file_path(db, key);
+        let metadata_path = self.file_meta(db, key);
+
+        tokio::fs::metadata(&metadata_path).await?;
         let mut file_content = tokio::fs::File::open(ressource_path).await?;
 
         let size = tokio::io::copy(&mut file_content, &mut writer).await?;
-
         Ok(size)
     }
 
@@ -149,10 +310,11 @@ impl BackendStorage for FSStorage {
         &self,
         db: &str,
         _start_after: Option<&str>,
-    ) -> anyhow::Result<
-        Pin<Box<dyn Stream<Item = anyhow::Result<String>> + Send>>,
+    ) -> Result<
+        Pin<Box<dyn Stream<Item = Result<ElementInfo, Self::Error>> + Send>>,
+        Self::Error,
     > {
-        let ressource_path = self.base_path.join(db);
+        let ressource_path = self.database_path(db);
 
         // We do a read_dir for now, it would be better to instead have an index
         // IMO
@@ -162,10 +324,13 @@ impl BackendStorage for FSStorage {
                 let name = entry
                     .file_name()
                     .into_string()
-                    .map_err(|_err| anyhow::anyhow!("Couldn't convert OsString to String."))?;
+                    .map_err(|_err| FSError::Weird)?;
 
-                if name.ends_with(".meta") {
-                    yield Ok::<_, anyhow::Error>(name);
+                if let Some(_name) = name.strip_suffix(".meta") {
+                    let content = tokio::fs::read_to_string(entry.path()).await?;
+                    let data_info = serde_json::from_str(&content)?;
+
+                    yield Ok(data_info);
                 }
             }
         };
@@ -177,17 +342,30 @@ impl BackendStorage for FSStorage {
         &self,
         db: &str,
         key: &str,
-    ) -> anyhow::Result<()> {
-        let ressource_path =
-            self.base_path.join(db).join(format!("{key}.0.part.0"));
-        let metadata_path =
-            self.base_path.join(db).join(format!("{key}.0.meta"));
+    ) -> Result<(), Self::Error> {
+        let _lock = self.lock_for_element(db, key).await?;
+        let ressource_path = self.file_path(db, key);
+        let metadata_path = self.file_meta(db, key);
 
         let a = tokio::fs::remove_file(ressource_path);
         let b = tokio::fs::remove_file(metadata_path);
         let (a, b) = join(a, b).await;
         a?;
         b?;
+
+        if let Some(DatabaseInfo {
+            name,
+            number_element,
+            created_at,
+        }) = self.database_metadata(db).await?
+        {
+            self.update_database(DatabaseInfo {
+                name,
+                number_element: number_element - 1,
+                created_at,
+            })
+            .await?;
+        }
 
         Ok(())
     }
@@ -259,6 +437,7 @@ mod tests {
             .insert_element_in_database(
                 db_name,
                 element_name,
+                Default::default(),
                 &mut element_reader,
             )
             .await
@@ -294,6 +473,7 @@ mod tests {
             .insert_element_in_database(
                 db_name,
                 element_name,
+                Default::default(),
                 &mut std::io::Cursor::new(b""),
             )
             .await
@@ -308,7 +488,7 @@ mod tests {
         while let Some(result) = element_list_stream.next().await {
             match result {
                 Ok(name) => {
-                    if name == format!("{}.0.meta", element_name) {
+                    if name.name == element_name {
                         found_element = true;
                         break;
                     }
@@ -335,6 +515,7 @@ mod tests {
             .insert_element_in_database(
                 db_name,
                 element_name,
+                Default::default(),
                 &mut std::io::Cursor::new(b""),
             )
             .await
@@ -355,7 +536,7 @@ mod tests {
         while let Some(result) = element_list_stream.next().await {
             match result {
                 Ok(name) => {
-                    if name == format!("{}.0.meta", element_name) {
+                    if name.name == element_name {
                         found_element = true;
                         break;
                     }

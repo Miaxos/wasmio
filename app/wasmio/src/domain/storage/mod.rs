@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::infrastructure::storage::{BackendStorage, FSStorage};
+use crate::infrastructure::storage::{BackendStorage, ElementInfo, FSStorage};
 
 pub mod errors;
 use axum::body::{Body, BodyDataStream};
@@ -58,7 +58,11 @@ where
     pub async fn put_object(
         &self,
         PutObjectRequest {
-            bucket, key, body, ..
+            bucket,
+            key,
+            body,
+            metadata,
+            ..
         }: PutObjectRequest,
     ) -> Result<PutObjectOutput, BucketStorageError> {
         let body = body.ok_or(BucketStorageError::Unknown)?;
@@ -67,12 +71,13 @@ where
         let mut body_reader = StreamReader::new(body_err);
 
         self.backend_storage
-            .insert_element_in_database(&bucket, &key, &mut body_reader)
-            .await
-            .map_err(|err| {
-                error!("{err:?}");
-                BucketStorageError::Unknown
-            })?;
+            .insert_element_in_database(
+                &bucket,
+                &key,
+                metadata.unwrap_or_default(),
+                &mut body_reader,
+            )
+            .await?;
 
         Ok(PutObjectOutputBuilder::default()
             .e_tag(Some("unimplemented".to_string()))
@@ -110,9 +115,18 @@ where
         let mut contents: Vec<Object> = Vec::new();
         while let Some(elt) = s.next().await {
             match elt {
-                Ok(elt) => {
+                Ok(ElementInfo {
+                    name,
+                    last_modified,
+                    size,
+                    checksum,
+                    ..
+                }) => {
                     contents.push(Object {
-                        key: Some(elt),
+                        key: Some(name),
+                        size: Some(size as i64),
+                        last_modified: Some(last_modified.to_rfc3339()),
+                        e_tag: Some(checksum),
                         ..Default::default()
                     });
                 }
@@ -133,18 +147,40 @@ where
         &self,
         GetObjectRequest { bucket, key, .. }: GetObjectRequest,
     ) -> Result<GetObjectOutput, BucketStorageError> {
+        // TODO: Ensure the file exist before reading it, right now, the error
+        // is not bubbled up as we do an async read.
         let (mut asyncwriter, asyncreader) = tokio::io::duplex(8192);
 
+        // Ugly shit
         let s = self.clone();
+        let b = bucket.clone();
+        let k = key.clone();
         tokio::spawn(async move {
             if let Err(err) = s
                 .backend_storage
-                .get_element_in_database(&bucket, &key, &mut asyncwriter)
+                .get_element_in_database(&b, &k, &mut asyncwriter)
                 .await
             {
                 warn!("{err:?}");
             }
         });
+
+        let ElementInfo {
+            size,
+            last_modified,
+            checksum,
+            metadatas,
+            ..
+        } = match self
+            .backend_storage
+            .get_element_metadata_in_database(&bucket, &key)
+            .await?
+        {
+            Some(elt) => elt,
+            None => {
+                return Err(BucketStorageError::NoKey);
+            }
+        };
 
         let body = Body::from_stream(ReaderStream::new(asyncreader));
 
@@ -156,15 +192,15 @@ where
             content_disposition: None,
             content_encoding: None,
             content_language: None,
-            content_length: None,
+            content_length: Some(size as i64),
             content_range: None,
             content_type: None,
             delete_marker: None,
-            e_tag: None,
+            e_tag: Some(checksum),
             expiration: None,
             expires: None,
-            last_modified: None,
-            metadata: None,
+            last_modified: Some(last_modified.to_rfc3339()),
+            metadata: Some(metadatas),
             missing_meta: None,
             object_lock_legal_hold_status: None,
             object_lock_mode: None,

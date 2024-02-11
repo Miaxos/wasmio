@@ -1,8 +1,8 @@
 #![allow(dead_code)]
+use std::collections::HashMap;
 use std::pin::Pin;
 
 use axum::async_trait;
-use chrono::{DateTime, Utc};
 use futures::Stream;
 use tokio::io::{AsyncRead, AsyncWrite};
 
@@ -11,6 +11,9 @@ pub use fs_storage::{FSError, FSStorage};
 
 mod database;
 pub use database::DatabaseInfo;
+
+mod element;
+pub use element::ElementInfo;
 
 /// Implement this trait which define the backend storage used to store data
 ///
@@ -43,8 +46,9 @@ pub trait BackendStorage: Send + Sync {
         &self,
         db: &str,
         start_after: Option<&str>,
-    ) -> anyhow::Result<
-        Pin<Box<dyn Stream<Item = anyhow::Result<String>> + Send>>,
+    ) -> Result<
+        Pin<Box<dyn Stream<Item = Result<ElementInfo, Self::Error>> + Send>>,
+        Self::Error,
     >;
 
     /// Get element from the database,
@@ -53,13 +57,21 @@ pub trait BackendStorage: Send + Sync {
         db: &str,
         key: &str,
         writer: &mut T,
-    ) -> anyhow::Result<u64>;
+    ) -> Result<u64, Self::Error>;
+
+    /// Get element from the database,
+    async fn get_element_metadata_in_database(
+        &self,
+        db: &str,
+        key: &str,
+    ) -> Result<Option<ElementInfo>, Self::Error>;
 
     /// Put an element inside database
     async fn insert_element_in_database<R: AsyncRead + Unpin + Send>(
         &self,
         db: &str,
         name_elt: &str,
+        metadatas: HashMap<String, String>,
         content: &mut R,
     ) -> Result<ElementInfo, Self::Error>;
 
@@ -68,14 +80,5 @@ pub trait BackendStorage: Send + Sync {
         &self,
         db: &str,
         name_elt: &str,
-    ) -> anyhow::Result<()>;
-}
-
-#[derive(Debug, serde::Serialize, serde::Deserialize, Default)]
-pub struct ElementInfo {
-    pub name: String,
-    pub size: u64,
-    pub created_at: DateTime<Utc>,
-    /// Only using sha256 for now
-    pub checksum: String,
+    ) -> Result<(), Self::Error>;
 }

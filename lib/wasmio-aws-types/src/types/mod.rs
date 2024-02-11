@@ -41,3 +41,5 @@ pub use get_object::{
     GetObjectOutput, GetObjectOutputBuilder, GetObjectOutputBuilderError,
     GetObjectRequest, GetObjectRequestBuilder, GetObjectRequestBuilderError,
 };
+
+// mod get_object_attributes;

@@ -1,6 +1,6 @@
 [package]
 name = "miaxos/wasmio"
-version = "0.0.2"
+version = "0.0.6"
 description = "S3 on the Edge"
 wasmer-extra-flags = "--net --enable-threads --enable-bulk-memory --env CONFIG_FILE_LOCATION=/public/config.local.toml"
 

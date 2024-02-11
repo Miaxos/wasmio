@@ -1,4 +1,6 @@
 use std::net::SocketAddr;
+use std::path::PathBuf;
+use std::str::FromStr;
 
 use anyhow::Context;
 use config::Config;
@@ -24,7 +26,7 @@ impl Cfg {
         let settings = Config::builder()
             .add_source(config::File::with_name(&file_location))
             .add_source(
-                config::Environment::with_prefix("ROSTER")
+                config::Environment::with_prefix("WASMIO")
                     .try_parsing(false)
                     .separator("_"),
             )
@@ -33,5 +35,14 @@ impl Cfg {
         let config = settings.try_deserialize::<Cfg>()?;
 
         Ok(config)
+    }
+
+    pub fn hack() -> anyhow::Result<Cfg> {
+        Ok(Cfg {
+            bind_addr: SocketAddr::from_str("0.0.0.0:80")?,
+            storage: StorageConfig {
+                path: PathBuf::new().join("public").join("data"),
+            },
+        })
     }
 }
