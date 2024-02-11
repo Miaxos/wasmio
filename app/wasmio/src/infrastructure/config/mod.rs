@@ -37,6 +37,7 @@ impl Cfg {
         Ok(config)
     }
 
+    #[allow(dead_code)]
     pub fn hack() -> anyhow::Result<Cfg> {
         Ok(Cfg {
             bind_addr: SocketAddr::from_str("0.0.0.0:80")?,

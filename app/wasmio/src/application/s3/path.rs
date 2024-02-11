@@ -19,7 +19,7 @@ impl S3Path {
         parts: &Parts,
     ) -> Result<Self, S3HTTPError> {
         let path = parts.uri.path();
-        let path = urlencoding::decode(path).map_err(|e| {
+        let path = urlencoding::decode(path).map_err(|_e| {
             S3HTTPError::custom(
                 "",
                 request_id.to_string(),
@@ -126,11 +126,6 @@ impl S3Path {
             bucket: bucket.to_string(),
             key: key.to_string(),
         })
-    }
-
-    #[must_use]
-    pub const fn is_root(&self) -> bool {
-        matches!(*self, Self::Root)
     }
 
     #[must_use]

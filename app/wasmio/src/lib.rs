@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 #![cfg_attr(all(target_arch = "wasm32", target_os = "wasi"), feature(wasi_ext))]
 #![cfg_attr(
     all(target_arch = "wasm32", target_os = "wasi"),

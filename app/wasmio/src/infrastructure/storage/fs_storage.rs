@@ -67,7 +67,7 @@ impl FSStorage {
     pub fn file_path_lock(&self, db_name: &str, file_name: &str) -> PathBuf {
         self.base_path
             .join(db_name)
-            .join(format!("{file_name}.lock"))
+            .join(format!(".{file_name}.lock"))
     }
 
     pub fn file_meta(&self, db_name: &str, file_name: &str) -> PathBuf {
@@ -96,6 +96,7 @@ impl FSStorage {
         let file = tokio::fs::OpenOptions::new()
             .write(true)
             .create(true)
+            .truncate(true)
             .open(&path)
             .await?;
         unsafe { flock(file.as_raw_fd(), LOCK_EX) };
@@ -111,6 +112,7 @@ impl FSStorage {
         let file = tokio::fs::OpenOptions::new()
             .write(true)
             .create(true)
+            .truncate(true)
             .open(&path)
             .await?;
         unsafe { flock(file.as_raw_fd(), LOCK_EX) };

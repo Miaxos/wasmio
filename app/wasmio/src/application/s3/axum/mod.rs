@@ -4,8 +4,6 @@ use axum::http::header::AsHeaderName;
 use axum::http::response::Builder;
 use axum::http::{HeaderMap, HeaderName, HeaderValue};
 
-pub mod request_context;
-
 pub fn header_string_opt<K: AsHeaderName>(
     key: K,
     map: &HeaderMap,

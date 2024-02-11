@@ -66,16 +66,6 @@ impl Context {
         }
     }
 
-    pub fn expect_root(&self) -> Result<(), S3Error> {
-        match &self.path {
-            S3Path::Root => Ok(()),
-            _ => {
-                error!("You should have root here, weird, investigate.");
-                Err(S3Error::invalid_request("You should have a Root here."))
-            }
-        }
-    }
-
     pub fn body(&mut self) -> Body {
         std::mem::take(&mut self.body)
     }
