@@ -29,7 +29,6 @@ pub async fn start_simple_server() -> anyhow::Result<String> {
                 pick_unused_port().unwrap(),
             );
             let path = PathBuf::from_str("/").unwrap();
-            dbg!(&path);
             std::fs::create_dir_all(&path).expect("shouldn't fail");
             let cfg = Cfg {
                 bind_addr: addr,
