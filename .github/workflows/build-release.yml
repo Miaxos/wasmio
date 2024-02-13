@@ -186,10 +186,18 @@ jobs:
       run: strip "$BIN"
 
     - name: Determine archive name
+      if: matrix.special != 'wasi'
       shell: bash
       run: |
         version="${{ needs.create-release.outputs.version }}"
         echo "ARCHIVE=wasmio-${{ matrix.target }}" >> $GITHUB_ENV
+
+    - name: Determine archive name (WASI)
+      if: matrix.special == 'wasi'
+      shell: bash
+      run: |
+        version="${{ needs.create-release.outputs.version }}"
+        echo "ARCHIVE=wasmio-wasi-${{ matrix.target }}" >> $GITHUB_ENV
 
     - name: Creating directory for archive
       shell: bash
@@ -218,19 +226,9 @@ jobs:
         echo "ASSET_SUM=$ARCHIVE.tar.gz.sha256" >> $GITHUB_ENV
 
     - name: Upload release archive
-      if: matrix.special != 'wasi'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       shell: bash
       run: |
         release_name="wasmio-v${{ needs.create-release.outputs.version }}"
-        gh release upload "$release_name" ${{ env.ASSET }} ${{ env.ASSET_SUM }}
-
-    - name: Upload release archive (WASI)
-      if: matrix.special == 'wasi'
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      shell: bash
-      run: |
-        release_name="wasmio-wasi-v${{ needs.create-release.outputs.version }}"
         gh release upload "$release_name" ${{ env.ASSET }} ${{ env.ASSET_SUM }}
