@@ -1,5 +1,4 @@
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Duration;
 
@@ -27,7 +26,10 @@ pub async fn start_simple_server() -> anyhow::Result<String> {
                 IpAddr::V4(Ipv4Addr::LOCALHOST),
                 pick_unused_port().unwrap(),
             );
-            let path = PathBuf::from_str("/").unwrap();
+            #[cfg(target_os = "wasi")]
+            let path = std::path::PathBuf::from_str("/").unwrap();
+            #[cfg(not(target_os = "wasi"))]
+            let path = tempfile::tempdir().unwrap().path().into();
             std::fs::create_dir_all(&path).expect("shouldn't fail");
             let cfg = Cfg {
                 bind_addr: addr,
