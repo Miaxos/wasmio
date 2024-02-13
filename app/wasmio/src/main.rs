@@ -31,7 +31,7 @@ async fn main() -> anyhow::Result<()> {
 "###
     );
 
-    let config = Cfg::from_env()?;
+    let config = Cfg::hack()?;
 
     println!(
         r###"

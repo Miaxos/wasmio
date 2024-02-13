@@ -31,6 +31,7 @@ libc = "0.2.152"
 
 
 hyper = "=0.14"
+h2 = "=0.4"
 # NOTE: We need to pin and replace some dependencies to achieve wasix compatibility.
 tokio = { version = "=1.35", default-features = false }
 tokio-util = "0.7"

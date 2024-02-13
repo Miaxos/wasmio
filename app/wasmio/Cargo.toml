@@ -77,8 +77,12 @@ urlencoding = "2"
 chrono = "0.4.33"
 
 [dev-dependencies]
+bytes = "1"
 tempfile = "3"
 insta = "1"
+h2.workspace = true
 http-body-util = "0.1"
+http = "1"
 rand = "0.8"
-reqwest = "0.11"
+wasm-bindgen-futures = "=0.4.40"
+ntest = "0.9"

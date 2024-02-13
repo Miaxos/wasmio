@@ -103,6 +103,7 @@ jobs:
       shell: bash
       run: |
         cargo install cargo-wasix
+        echo "CARGO_TARGET_WASM32_WASMER_WASI_RUNNER=$(pwd)/wasmer-net" >> $GITHUB_ENV
         echo "CARGO=cargo wasix" >> $GITHUB_ENV
 
     - name: Setup Wasmer
@@ -134,7 +135,7 @@ jobs:
         set -x
 
     - name: Run tests
-      run: ${{ env.CARGO }} test --locked --verbose --workspace ${{ env.TARGET_FLAGS }} --
+      run: ${{ env.CARGO }} test --locked --verbose --workspace ${{ env.TARGET_FLAGS }} -- --nocapture
 
   rustfmt:
     runs-on: ubuntu-latest

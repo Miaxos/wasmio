@@ -1,4 +1,6 @@
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::path::PathBuf;
+use std::str::FromStr;
 use std::time::Duration;
 
 use tempfile::tempdir;
@@ -26,13 +28,17 @@ pub async fn start_simple_server() -> anyhow::Result<String> {
                 IpAddr::V4(Ipv4Addr::LOCALHOST),
                 pick_unused_port().unwrap(),
             );
-            let path = tempdir().unwrap().path().into();
-            std::fs::create_dir_all(&path);
+            let path = PathBuf::from_str("/").unwrap();
+            dbg!(&path);
+            std::fs::create_dir_all(&path).expect("shouldn't fail");
             let cfg = Cfg {
                 bind_addr: addr,
                 storage: StorageConfig { path },
             };
-            tokio::spawn(async move { launch_wasmio(cfg).await });
+            tokio::spawn(async move {
+                std::env::set_var("RUST_LOG", "info");
+                launch_wasmio(cfg).await
+            });
 
             tokio::time::sleep(Duration::from_millis(100)).await;
             Ok(addr.to_string())

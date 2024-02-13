@@ -132,6 +132,7 @@ jobs:
       shell: bash
       run: |
         cargo install cargo-wasix
+        echo "CARGO_TARGET_WASM32_WASMER_WASI_RUNNER=$(pwd)/wasmer-net" >> $GITHUB_ENV
         echo "CARGO=cargo wasix" >> $GITHUB_ENV
 
     - name: Setup Wasmer
