@@ -117,7 +117,7 @@ jobs:
         echo "flags are: ${{ env.CROSS_CONTAINER_OPTS }}"
 
     - name: Build wasmio and all crates
-      run: ${{ env.CARGO }} build --verbose --workspace ${{ env.TARGET_FLAGS }}
+      run: ${{ env.CARGO }} build --frozen --verbose --workspace ${{ env.TARGET_FLAGS }}
 
     # This is useful for debugging problems when the expected build artifacts
     # (like shell completions and man pages) aren't generated.
@@ -134,7 +134,7 @@ jobs:
         set -x
 
     - name: Run tests
-      run: ${{ env.CARGO }} test --verbose --workspace ${{ env.TARGET_FLAGS }} --
+      run: ${{ env.CARGO }} test --frozen --verbose --workspace ${{ env.TARGET_FLAGS }} --
 
   rustfmt:
     runs-on: ubuntu-latest
