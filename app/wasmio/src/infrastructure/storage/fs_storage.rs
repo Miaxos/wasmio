@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use std::collections::HashMap;
 use std::io::ErrorKind;
+#[cfg(not(target_os = "wasi"))]
 use std::os::fd::AsRawFd;
 use std::path::PathBuf;
 use std::pin::Pin;
@@ -10,19 +11,16 @@ use base64ct::{Base64, Encoding};
 use chrono::Utc;
 use futures::future::join;
 use futures::{Stream, TryStreamExt};
-use libc::c_int;
+#[cfg(not(target_os = "wasi"))]
+use libc::flock;
+#[cfg(not(target_os = "wasi"))]
+use libc::{LOCK_EX, LOCK_UN};
 use sha2::{Digest, Sha256};
 use tokio::fs::File;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tracing::warn;
 
 use super::{BackendStorage, DatabaseInfo, ElementInfo};
-
-pub const LOCK_EX: c_int = 2;
-pub const LOCK_UN: c_int = 8;
-extern "C" {
-    fn flock(fd: c_int, operation: c_int) -> c_int;
-}
 
 /// We have a FSStorage implemented which aims to store files inside the FS.
 ///
@@ -99,7 +97,10 @@ impl FSStorage {
             .truncate(true)
             .open(&path)
             .await?;
-        unsafe { flock(file.as_raw_fd(), LOCK_EX) };
+        #[cfg(not(target_os = "wasi"))]
+        unsafe {
+            flock(file.as_raw_fd(), LOCK_EX)
+        };
         Ok(LockGuard { file })
     }
 
@@ -115,7 +116,10 @@ impl FSStorage {
             .truncate(true)
             .open(&path)
             .await?;
-        unsafe { flock(file.as_raw_fd(), LOCK_EX) };
+        #[cfg(not(target_os = "wasi"))]
+        unsafe {
+            flock(file.as_raw_fd(), LOCK_EX)
+        };
         Ok(LockGuard { file })
     }
 
@@ -143,7 +147,10 @@ pub struct LockGuard {
 
 impl Drop for LockGuard {
     fn drop(&mut self) {
-        unsafe { flock(self.file.as_raw_fd(), LOCK_UN) };
+        #[cfg(not(target_os = "wasi"))]
+        unsafe {
+            flock(self.file.as_raw_fd(), LOCK_UN)
+        };
     }
 }
 

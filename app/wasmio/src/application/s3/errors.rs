@@ -243,7 +243,7 @@ impl From<BucketStorageError> for S3Error {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(target_arch = "wasm32"), not(target_os = "wasi")))]
 mod tests {
     use axum::response::IntoResponse;
     use http_body_util::BodyExt;
@@ -256,7 +256,18 @@ mod tests {
             S3HTTPError::custom("test", "blbl", S3ErrorCodeKind::InternalError)
                 .into_response();
 
-        insta::assert_debug_snapshot!(response);
+        insta::assert_debug_snapshot!(response, @r###"
+        Response {
+            status: 500,
+            version: HTTP/1.1,
+            headers: {
+                "content-type": "application/xml",
+            },
+            body: Body(
+                UnsyncBoxBody,
+            ),
+        }
+        "###);
         let body = response.into_body().collect().await.unwrap();
 
         let result = String::from_utf8(body.to_bytes().to_vec()).unwrap();

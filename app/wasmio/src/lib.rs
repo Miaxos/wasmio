@@ -4,6 +4,7 @@
     all(target_arch = "wasm32", target_os = "wasi"),
     feature(async_fn_in_trait)
 )]
+#![cfg_attr(all(target_arch = "wasm32", target_os = "wasi"), feature(stdsimd))]
 
 mod application;
 use application::Application;

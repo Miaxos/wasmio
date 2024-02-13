@@ -139,50 +139,101 @@ impl S3Path {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(target_arch = "wasm32"), not(target_os = "wasi")))]
 mod tests {
     use super::*;
 
     #[test]
     fn parse_s3_path_root() {
-        insta::assert_debug_snapshot!(S3Path::try_from_path("/"));
+        insta::assert_debug_snapshot!(S3Path::try_from_path("/"), @r###"
+        Ok(
+            Root,
+        )
+        "###);
     }
 
     #[test]
     fn parse_s3_path_bucket() {
-        insta::assert_debug_snapshot!(S3Path::try_from_path("/bucket"));
+        insta::assert_debug_snapshot!(S3Path::try_from_path("/bucket"), @r###"
+        Ok(
+            Bucket {
+                bucket: "bucket",
+            },
+        )
+        "###);
     }
 
     #[test]
     fn parse_s3_path_bucket_2() {
-        insta::assert_debug_snapshot!(S3Path::try_from_path("/bucket/"));
+        insta::assert_debug_snapshot!(S3Path::try_from_path("/bucket/"), @r###"
+        Ok(
+            Bucket {
+                bucket: "bucket",
+            },
+        )
+        "###);
     }
 
     #[test]
     fn parse_s3_path_object() {
         insta::assert_debug_snapshot!(S3Path::try_from_path(
             "/bucket/dir/object"
-        ));
+        ), @r###"
+        Ok(
+            Object {
+                bucket: "bucket",
+                key: "dir/object",
+            },
+        )
+        "###);
     }
 
     #[test]
     fn parse_s3_path_fail() {
-        insta::assert_debug_snapshot!(S3Path::try_from_path("asd"));
+        insta::assert_debug_snapshot!(S3Path::try_from_path("asd"), @r###"
+        Err(
+            S3Error {
+                message: None,
+                kind: InvalidURI,
+            },
+        )
+        "###);
     }
 
     #[test]
     fn parse_s3_path_fail_2() {
-        insta::assert_debug_snapshot!(S3Path::try_from_path("a/"));
+        insta::assert_debug_snapshot!(S3Path::try_from_path("a/"), @r###"
+        Err(
+            S3Error {
+                message: None,
+                kind: InvalidURI,
+            },
+        )
+        "###);
     }
 
     #[test]
     fn parse_s3_path_fail_3() {
-        insta::assert_debug_snapshot!(S3Path::try_from_path("/*"));
+        insta::assert_debug_snapshot!(S3Path::try_from_path("/*"), @r###"
+        Err(
+            S3Error {
+                message: None,
+                kind: InvalidBucketName,
+            },
+        )
+        "###);
     }
 
     #[test]
     fn parse_s3_path_fail_4() {
         let too_long_path = format!("/{}/{}", "asd", "b".repeat(2048).as_str());
-        insta::assert_debug_snapshot!(S3Path::try_from_path(&too_long_path));
+        insta::assert_debug_snapshot!(S3Path::try_from_path(&too_long_path), @r###"
+        Err(
+            S3Error {
+                message: None,
+                kind: KeyTooLongError,
+            },
+        )
+        "###);
     }
 }

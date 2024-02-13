@@ -99,7 +99,7 @@ jobs:
         echo "CROSS_CONTAINER_OPTS=${{matrix.flags}}" >> $GITHUB_ENV
 
     - name: Use WASIX
-      if: matrix.os == 'ubuntu-latest' && matrix.special == 'wasix'
+      if: matrix.os == 'ubuntu-latest' && matrix.special == 'wasi'
       shell: bash
       run: |
         cargo install cargo-wasix
