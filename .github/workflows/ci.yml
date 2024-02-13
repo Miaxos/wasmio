@@ -105,6 +105,10 @@ jobs:
         cargo install cargo-wasix
         echo "CARGO=cargo wasix" >> $GITHUB_ENV
 
+    - name: Setup Wasmer
+      if: matrix.os == 'ubuntu-latest' && matrix.special == 'wasi'
+      uses: wasmerio/setup-wasmer@v3.1
+
     - name: Show command used for Cargo
       run: |
         echo "cargo command is: ${{ env.CARGO }}"
