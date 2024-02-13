@@ -130,7 +130,7 @@ jobs:
         set -x
 
     - name: Run tests
-      run: ${{ env.CARGO }} test --verbose --workspace ${{ env.TARGET_FLAGS }}
+      run: ${{ env.CARGO }} test --verbose --workspace ${{ env.TARGET_FLAGS }} --
 
   rustfmt:
     runs-on: ubuntu-latest
