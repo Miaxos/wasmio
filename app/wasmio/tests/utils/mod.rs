@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Duration;
 
-use tempfile::tempdir;
 use tokio::sync::OnceCell;
 
 mod port_picker;

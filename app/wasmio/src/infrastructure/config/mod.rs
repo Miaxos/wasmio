@@ -19,6 +19,7 @@ pub struct Cfg {
 
 impl Cfg {
     /// Read the associated configuration env
+    #[allow(dead_code)]
     pub fn from_env() -> anyhow::Result<Cfg> {
         let file_location = dotenv::var("CONFIG_FILE_LOCATION")
             .with_context(|| "`CONFIG_FILE_LOCATION` must be set.")?;
