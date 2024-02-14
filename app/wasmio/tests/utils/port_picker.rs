@@ -83,8 +83,6 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let a = pick_unused_port();
-        dbg!(&a);
-        assert!(a.is_some());
+        assert!(pick_unused_port().is_some());
     }
 }

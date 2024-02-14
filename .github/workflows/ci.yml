@@ -135,7 +135,7 @@ jobs:
         set -x
 
     - name: Run tests
-      run: ${{ env.CARGO }} test --locked --verbose --workspace ${{ env.TARGET_FLAGS }} -- --nocapture
+      run: ${{ env.CARGO }} test --locked --verbose --workspace ${{ env.TARGET_FLAGS }} -- --nocapture --
 
   rustfmt:
     runs-on: ubuntu-latest
