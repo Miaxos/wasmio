@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.14](https://github.com/Miaxos/wasmio/compare/wasmio-v0.0.13...wasmio-v0.0.14) - 2024-02-14
+
+### Fixed
+- ci
+
 ## [0.0.13](https://github.com/Miaxos/wasmio/compare/wasmio-v0.0.12...wasmio-v0.0.13) - 2024-02-13
 
 ### Other
